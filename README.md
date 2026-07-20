@@ -1,46 +1,45 @@
-# Отклики — трекер вакансий
+# Application Tracker
 
-Персональный трекер откликов на работу. Одна особенность отличает его от Teal /
-Huntr: **трекер обновляю не только я через веб-интерфейс, но и Claude — через
-`tracker` CLI**. Обе точки входа сидят на одном сервисном слое.
+A personal job-application tracker. One thing sets it apart from Teal / Huntr:
+**the tracker is updated not only by me through the web UI, but also by Claude —
+via the `tracker` CLI**. Both entry points sit on one service layer.
 
-- **Бэкенд**: FastAPI + SQLModel + SQLite
-- **Фронт**: React + TypeScript + Vite + TanStack Query + @dnd-kit
-- Дизайн и решения: [docs/DESIGN.md](docs/DESIGN.md) · превью-макет: `docs/mockup.html`
+- **Backend**: FastAPI + SQLModel + SQLite
+- **Frontend**: React + TypeScript + Vite + TanStack Query + @dnd-kit
+- Design & decisions: [docs/DESIGN.md](docs/DESIGN.md) · static preview: `docs/mockup.html`
 
-## Структура
+## Layout
 
 ```
-backend/   FastAPI + SQLite + tracker-CLI   (один сервисный слой services.py)
-frontend/  React + TS + Vite                (доска / таблица / метрики)
+backend/   FastAPI + SQLite + tracker CLI   (one service layer, services.py)
+frontend/  React + TS + Vite                (Board / Table / Metrics)
 docs/      DESIGN.md, mockup.html
 ```
 
-## Запуск
+## Running
 
-### Бэкенд (порт 8787)
+### Backend (port 8787)
 ```bash
 cd backend
 python3 -m venv .venv
 .venv/bin/pip install -e .
-.venv/bin/tracker seed          # наполнить примерами (один раз)
-.venv/bin/tracker serve         # REST API на http://127.0.0.1:8787
+.venv/bin/tracker seed          # seed with sample data (once)
+.venv/bin/tracker serve         # REST API at http://127.0.0.1:8787
 ```
 
-### Фронт (порт 5173)
+### Frontend (port 5173)
 ```bash
 cd frontend
 npm install
-npm run dev                     # http://localhost:5173  (проксирует /api → 8787)
+npm run dev                     # http://localhost:5173  (proxies /api → 8787)
 ```
 
-Открыть **http://localhost:5173**.
+Open **http://localhost:5173**.
 
 ## `tracker` CLI
 
-Пишет прямо в `backend/tracker.db` через тот же сервисный слой, что и веб —
-**сервер для этого поднимать не нужно**. Запускать из `backend/` как
-`.venv/bin/tracker <cmd>`.
+Writes straight to `backend/tracker.db` through the same service layer as the web
+UI — **no server needed**. Run from `backend/` as `.venv/bin/tracker <cmd>`.
 
 ```bash
 tracker add -c "Acme" -t "Senior Backend Engineer" \
@@ -48,15 +47,17 @@ tracker add -c "Acme" -t "Senior Backend Engineer" \
 tracker list [--status applied]
 tracker show 12
 tracker apply 12 --source linkedin --resume backend-v3 --cover-letter-file cl.md
-tracker status 12 interview --note "прошёл HR-скрининг, дальше систем-дизайн"
-tracker note 12 "рекрутёр обещал ответ до пятницы"
-tracker set 12 --next-action "написать follow-up" --next-action-date 2026-07-25
+tracker status 12 interview --note "passed the HR screen, system design next"
+tracker note 12 "recruiter promised an answer by Friday"
+tracker set 12 --next-action "write a follow-up" --next-action-date 2026-07-25
 tracker metrics
-tracker seed --force            # сбросить примеры
+tracker seed --force            # reset sample data
 ```
 
-Статусы: `saved · applied · screening · interview · offer · accepted ·
-rejected · withdrawn · ghosted`. Раунды интервью — событиями в таймлайне.
+Statuses: `saved · applied · screening · interview · offer · accepted · rejected ·
+withdrawn · ghosted`. Interview rounds are timeline events, not statuses. In the UI,
+`screening` is shown as **In Contact** — any substantive reply from an employer
+before an interview is scheduled.
 
 ## REST API
 
@@ -65,6 +66,6 @@ rejected · withdrawn · ghosted`. Раунды интервью — событ�
 `POST /api/applications/{id}/status` · `POST /api/applications/{id}/events` ·
 `GET /api/metrics` · `GET /api/meta`. Docs: http://127.0.0.1:8787/docs
 
-## Данные
+## Data
 
-Одна SQLite-БД `backend/tracker.db`. Переопределить путь — `TRACKER_DB=/path.db`.
+A single SQLite DB at `backend/tracker.db`. Override the path with `TRACKER_DB=/path.db`.
