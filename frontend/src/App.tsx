@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { api } from './api'
+import { api, type ApplicationDetail, type Status } from './api'
 import { BoardView } from './Board'
 import { TableView, MetricsView } from './Views'
+import { JobForm, type FormState } from './JobForm'
 import { IconClock, IconCode, IconPlus, IconSearch, IconSun } from './icons'
 
 type View = 'board' | 'table' | 'metrics'
@@ -79,11 +80,13 @@ function TopBar({
   onView,
   onToggleTheme,
   onOpen,
+  onAdd,
 }: {
   view: View
   onView: (v: View) => void
   onToggleTheme: () => void
   onOpen: (id: number) => void
+  onAdd: () => void
 }) {
   return (
     <header className="topbar">
@@ -115,7 +118,7 @@ function TopBar({
       <button className="icon-btn" title="Toggle theme" aria-label="Toggle theme" onClick={onToggleTheme}>
         <IconSun />
       </button>
-      <button className="btn-primary">
+      <button className="btn-primary" onClick={onAdd}>
         <IconPlus /> Add
       </button>
     </header>
@@ -136,6 +139,7 @@ function Footer() {
 export default function App() {
   const [view, setView] = useState<View>('board')
   const [selected, setSelected] = useState<number | null>(null)
+  const [form, setForm] = useState<FormState | null>(null)
 
   const toggleTheme = () => {
     const root = document.documentElement
@@ -151,13 +155,27 @@ export default function App() {
 
   return (
     <div className="app">
-      <TopBar view={view} onView={setView} onToggleTheme={toggleTheme} onOpen={openJob} />
+      <TopBar
+        view={view}
+        onView={setView}
+        onToggleTheme={toggleTheme}
+        onOpen={openJob}
+        onAdd={() => setForm({ mode: 'create' })}
+      />
       <div className="main">
-        {view === 'board' && <BoardView selected={selected} onSelect={setSelected} />}
+        {view === 'board' && (
+          <BoardView
+            selected={selected}
+            onSelect={setSelected}
+            onEdit={(app: ApplicationDetail) => setForm({ mode: 'edit', app })}
+            onCreate={(status?: Status) => setForm({ mode: 'create', status })}
+          />
+        )}
         {view === 'table' && <TableView onOpen={openJob} />}
         {view === 'metrics' && <MetricsView />}
       </div>
       <Footer />
+      {form && <JobForm state={form} onClose={() => setForm(null)} />}
     </div>
   )
 }

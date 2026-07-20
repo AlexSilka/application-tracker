@@ -9,7 +9,7 @@ import {
   useDroppable,
   type DragEndEvent,
 } from '@dnd-kit/core'
-import { api, type Application, type Status } from './api'
+import { api, type Application, type ApplicationDetail, type Status } from './api'
 import { KIND_LABEL, SRC_COLOR, STATUS_LABEL, WORK_MODE_LABEL } from './constants'
 import { daysUntil, fmtDate, fmtDateTime, formatSalary, stageAge } from './lib'
 import { IconCheck, IconClock, IconClose, IconDoc, IconLines } from './icons'
@@ -81,11 +81,13 @@ function Column({
   items,
   selected,
   onSelect,
+  onCreate,
 }: {
   status: Status
   items: Application[]
   selected: number | null
   onSelect: (id: number) => void
+  onCreate: (status: Status) => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status })
   return (
@@ -94,6 +96,7 @@ function Column({
         <span className="dot" style={{ background: `var(--st-${status})` }} />
         <span className="name">{STATUS_LABEL[status]}</span>
         <span className="count">{items.length}</span>
+        <button className="add" title="Add job" onClick={() => onCreate(status)}>+</button>
       </div>
       <div ref={setNodeRef} className={`col-body ${isOver ? 'over' : ''}`}>
         {items.map((a) => (
@@ -134,9 +137,13 @@ function ArchiveColumn({ items }: { items: Application[] }) {
 export function BoardView({
   selected,
   onSelect,
+  onEdit,
+  onCreate,
 }: {
   selected: number | null
   onSelect: (id: number | null) => void
+  onEdit: (app: ApplicationDetail) => void
+  onCreate: (status?: Status) => void
 }) {
   const qc = useQueryClient()
   const { data: meta } = useQuery({ queryKey: ['meta'], queryFn: api.meta })
@@ -177,6 +184,7 @@ export function BoardView({
                 items={apps.filter((a) => a.status === s)}
                 selected={selected}
                 onSelect={onSelect}
+                onCreate={onCreate}
               />
             ))}
             <ArchiveColumn items={terminal} />
@@ -185,7 +193,7 @@ export function BoardView({
       </div>
       {selected != null && (
         <>
-          <DetailDrawer id={selected} onClose={() => onSelect(null)} />
+          <DetailDrawer id={selected} onClose={() => onSelect(null)} onEdit={onEdit} />
           <div className="scrim show" onClick={() => onSelect(null)} />
         </>
       )}
@@ -199,8 +207,25 @@ function TimelineNode({ meta, first }: { meta?: Record<string, unknown> | null; 
   return <div className={`tl-node ${first ? 'accent' : ''}`} style={style} />
 }
 
-function DetailDrawer({ id, onClose }: { id: number; onClose: () => void }) {
+function DetailDrawer({
+  id,
+  onClose,
+  onEdit,
+}: {
+  id: number
+  onClose: () => void
+  onEdit: (app: ApplicationDetail) => void
+}) {
+  const qc = useQueryClient()
   const { data: app } = useQuery({ queryKey: ['app', id], queryFn: () => api.get(id) })
+  const del = useMutation({
+    mutationFn: () => api.remove(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['apps'] })
+      qc.invalidateQueries({ queryKey: ['metrics'] })
+      onClose()
+    },
+  })
   if (!app) return <aside className="drawer"><div className="loading">Loading…</div></aside>
 
   const salary = formatSalary(app)
@@ -313,8 +338,16 @@ function DetailDrawer({ id, onClose }: { id: number; onClose: () => void }) {
       </div>
 
       <div className="drawer-actions">
-        <button className="primary">Change status</button>
-        <button>Note</button>
+        <button className="primary" onClick={() => onEdit(app)}>Edit</button>
+        <button
+          className="danger"
+          disabled={del.isPending}
+          onClick={() => {
+            if (window.confirm(`Delete "${app.company} — ${app.title}"? This cannot be undone.`)) del.mutate()
+          }}
+        >
+          Delete
+        </button>
         {app.job_url && <button onClick={() => window.open(app.job_url!, '_blank')}>Open ↗</button>}
       </div>
     </aside>

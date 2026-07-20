@@ -45,6 +45,30 @@ export interface ApplicationDetail extends Application {
   events: AppEvent[]
 }
 
+// Shape accepted by create (POST) and update (PATCH). Mirrors ApplicationCreate /
+// ApplicationUpdate in tracker/models.py. `company` and `title` are required on create.
+export interface JobInput {
+  company: string
+  title: string
+  description?: string
+  job_url?: string | null
+  location?: string | null
+  work_mode?: string | null
+  salary_min?: number | null
+  salary_max?: number | null
+  currency?: string | null
+  source?: string
+  status?: Status
+  resume_version?: string | null
+  cover_letter?: string | null
+  contact_name?: string | null
+  contact_email?: string | null
+  contact_url?: string | null
+  next_action?: string | null
+  next_action_date?: string | null
+  tags?: string[]
+}
+
 export interface StatusMeta {
   value: Status
   label: string
@@ -102,4 +126,16 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ kind, body }),
     }),
+  create: (body: JobInput) =>
+    request<ApplicationDetail>('/api/applications', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  update: (id: number, patch: Partial<JobInput>) =>
+    request<ApplicationDetail>(`/api/applications/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(patch),
+    }),
+  remove: (id: number) =>
+    request<void>(`/api/applications/${id}`, { method: 'DELETE' }),
 }
