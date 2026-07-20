@@ -1,21 +1,21 @@
 import type { Status } from './api'
 
 export const STATUS_LABEL: Record<Status, string> = {
-  saved: 'Сохранено',
-  applied: 'Отклик',
-  screening: 'Скрининг',
-  interview: 'Интервью',
-  offer: 'Оффер',
-  accepted: 'Принят',
-  rejected: 'Отказ',
-  withdrawn: 'Снят',
-  ghosted: 'Тишина',
+  saved: 'Saved',
+  applied: 'Applied',
+  screening: 'In Contact',
+  interview: 'Interview',
+  offer: 'Offer',
+  accepted: 'Accepted',
+  rejected: 'Rejected',
+  withdrawn: 'Withdrawn',
+  ghosted: 'Ghosted',
 }
 
 export const WORK_MODE_LABEL: Record<string, string> = {
-  onsite: 'офис',
-  hybrid: 'гибрид',
-  remote: 'удалёнка',
+  onsite: 'onsite',
+  hybrid: 'hybrid',
+  remote: 'remote',
 }
 
 // Subtle colour cue per channel (distinct from status hues).
@@ -31,12 +31,12 @@ export const SRC_COLOR: Record<string, string> = {
 }
 
 export const KIND_LABEL: Record<string, string> = {
-  created: 'Добавлено',
-  status_change: 'Статус',
-  note: 'Заметка',
+  created: 'Created',
+  status_change: 'Status',
+  note: 'Note',
   follow_up: 'Follow-up',
-  interview: 'Интервью',
-  email_sent: 'Письмо',
-  offer: 'Оффер',
-  rejection: 'Отказ',
+  interview: 'Interview',
+  email_sent: 'Email',
+  offer: 'Offer',
+  rejection: 'Rejection',
 }

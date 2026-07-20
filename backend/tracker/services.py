@@ -94,7 +94,7 @@ def create_application(session: Session, data: ApplicationCreate) -> Application
         Event(
             application_id=app.id,
             kind=EventKind.created,
-            body=f"Добавлено в трекер · статус «{STATUS_LABEL.get(app.status, app.status.value)}»",
+            body=f"Added to tracker · status: {STATUS_LABEL.get(app.status, app.status.value)}",
             occurred_at=now,
         )
     )
@@ -103,7 +103,7 @@ def create_application(session: Session, data: ApplicationCreate) -> Application
             Event(
                 application_id=app.id,
                 kind=EventKind.status_change,
-                body=f"Отклик отправлен · {app.source}",
+                body=f"Applied · {app.source}",
                 meta={"from": Status.saved.value, "to": Status.applied.value},
                 occurred_at=now,
             )
@@ -307,47 +307,47 @@ def seed(session: Session, force: bool = False) -> int:
     samples = [
         dict(company="Avito", title="Senior Backend Engineer (Python)", source="hh.ru",
              status=Status.saved, priority=4, salary_min=400000, salary_max=550000, currency="RUB",
-             location="Москва", work_mode="remote", tags=["python", "postgres"]),
+             location="Moscow", work_mode="remote", tags=["python", "postgres"]),
         dict(company="Miro", title="Software Engineer, Platform", source="linkedin",
              status=Status.saved, priority=3, salary_min=70000, salary_max=90000, currency="EUR",
              location="Amsterdam", work_mode="hybrid", tags=["go", "kubernetes"]),
         dict(company="Nebius", title="Backend Engineer", source="linkedin", status=Status.applied,
              priority=4, salary_min=75000, salary_max=95000, currency="EUR", location="Belgrade",
              work_mode="hybrid", resume_version="backend-v3", applied_days=3,
-             next_action="первый follow-up", next_after=4, tags=["python", "grpc"]),
+             next_action="first follow-up", next_after=4, tags=["python", "grpc"]),
         dict(company="Wildberries", title="Python Developer", source="company site",
              status=Status.applied, priority=3, salary_min=350000, salary_max=480000, currency="RUB",
-             location="Москва", work_mode="onsite", resume_version="backend-v3", applied_days=9,
-             next_action="follow-up, тишина", next_after=-2, tags=["python", "django"]),
+             location="Moscow", work_mode="onsite", resume_version="backend-v3", applied_days=9,
+             next_action="follow-up — no reply", next_after=-2, tags=["python", "django"]),
         dict(company="JetBrains", title="Software Developer, YouTrack", source="referral",
              status=Status.screening, priority=5, salary_min=80000, salary_max=110000, currency="EUR",
              location="Prague", work_mode="hybrid", resume_version="backend-v3", applied_days=5,
-             next_action="созвон с рекрутёром", next_after=1,
+             next_action="recruiter call", next_after=1,
              contact_name="Anna K.", contact_email="anna@jetbrains.com", tags=["kotlin", "python"]),
         dict(company="Yandex", title="Senior Software Engineer", source="referral",
              status=Status.interview, priority=5, salary_min=380000, salary_max=520000, currency="RUB",
-             location="Москва", work_mode="hybrid", resume_version="backend-v3", applied_days=12,
-             next_action="тех-интервью (кодинг)", next_after=2,
-             contact_name="Мария Иванова", contact_email="m.ivanova@yandex-team.ru",
+             location="Moscow", work_mode="hybrid", resume_version="backend-v3", applied_days=12,
+             next_action="tech interview (coding)", next_after=2,
+             contact_name="Maria Ivanova", contact_email="m.ivanova@yandex-team.ru",
              contact_url="https://linkedin.com/in/mivanova",
-             cover_letter="Здравствуйте, Мария! Меня заинтересовала роль — 6 лет строю "
-                          "высоконагруженные сервисы на Python/Go, последние 2 года — event-pipeline "
-                          "на 400k RPS. Буду рад обсудить детали.",
-             description="Ищем сильного backend-инженера в команду инфраструктуры данных. "
-                         "Стек: Python, Go, PostgreSQL, ClickHouse, Kubernetes. Задачи — "
-                         "проектирование распределённых сервисов обработки событий с нагрузкой "
-                         "до 1М RPS, снижение latency пайплайнов, менторинг. Требуется опыт 5+ лет.",
+             cover_letter="Hi Maria! I'm interested in the role — I've built high-load services "
+                          "in Python/Go for 6 years, the last 2 on an event pipeline at 400k RPS. "
+                          "Happy to discuss details.",
+             description="Looking for a strong backend engineer for the data infrastructure team. "
+                         "Stack: Python, Go, PostgreSQL, ClickHouse, Kubernetes. You'll design "
+                         "distributed event-processing services handling up to 1M RPS, cut pipeline "
+                         "latency, and mentor. 5+ years of experience required.",
              job_url="https://yandex.ru/jobs/vacancies/12345", tags=["python", "go", "clickhouse"]),
         dict(company="Toloka", title="ML Platform Engineer", source="linkedin",
              status=Status.interview, priority=4, salary_min=70000, salary_max=90000, currency="EUR",
              location="Remote", work_mode="remote", resume_version="ml-v1", applied_days=8,
-             next_action="этап 2 из 3", next_after=3, tags=["python", "ml", "airflow"]),
+             next_action="stage 2 of 3", next_after=3, tags=["python", "ml", "airflow"]),
         dict(company="Datadog", title="Software Engineer, Backend", source="linkedin",
              status=Status.offer, priority=5, salary_min=95000, salary_max=95000, currency="EUR",
              location="Paris", work_mode="hybrid", resume_version="backend-v3", applied_days=21,
-             next_action="ответить на оффер", next_after=5, tags=["go", "python"]),
+             next_action="reply to the offer", next_after=5, tags=["go", "python"]),
         dict(company="Ozon", title="Backend Engineer", source="hh.ru", status=Status.rejected,
-             priority=3, salary_min=300000, salary_max=420000, currency="RUB", location="Москва",
+             priority=3, salary_min=300000, salary_max=420000, currency="RUB", location="Moscow",
              work_mode="hybrid", resume_version="backend-v2", applied_days=18, reached=Status.screening,
              tags=["go"]),
         dict(company="Notion", title="Software Engineer", source="linkedin", status=Status.ghosted,
@@ -381,7 +381,7 @@ def seed(session: Session, force: bool = False) -> int:
             _seed_timeline(session, app, status, applied_days, reached)
         else:
             session.add(Event(application_id=app.id, kind=EventKind.created,
-                              body="Сохранено в wishlist", occurred_at=app.created_at))
+                              body="Saved to wishlist", occurred_at=app.created_at))
         session.commit()
         count += 1
 
@@ -400,8 +400,8 @@ def _seed_timeline(session: Session, app: Application, status: Status, applied_d
     target_rank = STATUS_RANK.get(target, STATUS_RANK[Status.applied])
 
     session.add(Event(application_id=app.id, kind=EventKind.status_change,
-                      body=f"Отклик отправлен · {app.source}"
-                           + (f" · резюме {app.resume_version}" if app.resume_version else ""),
+                      body=f"Applied · {app.source}"
+                           + (f" · resume {app.resume_version}" if app.resume_version else ""),
                       meta={"from": Status.saved.value, "to": Status.applied.value},
                       occurred_at=at(applied_days)))
 
@@ -418,15 +418,15 @@ def _seed_timeline(session: Session, app: Application, status: Status, applied_d
 
     if status == Status.rejected:
         session.add(Event(application_id=app.id, kind=EventKind.rejection,
-                          body="Отказ после скрининга", occurred_at=at(1)))
+                          body="Rejected after screening", occurred_at=at(1)))
     elif status == Status.ghosted:
         session.add(Event(application_id=app.id, kind=EventKind.note,
-                          body="Нет ответа больше 3 недель — помечено как тишина", occurred_at=at(0)))
+                          body="No reply for over 3 weeks — marked as ghosted", occurred_at=at(0)))
 
     if app.company == "Yandex":
         session.add(Event(application_id=app.id, kind=EventKind.interview,
-                          body="Систем-дизайн (75 мин). Проектировали rate-limiter.",
+                          body="System design (75 min). Designed a rate limiter.",
                           occurred_at=at(2)))
         session.add(Event(application_id=app.id, kind=EventKind.note,
-                          body="Систем-дизайн прошёл хорошо, дальше кодинг-секция. "
-                               "Повторить графовые алгоритмы.", occurred_at=at(0)))
+                          body="System design went well; a coding section is next. "
+                               "Review graph algorithms.", occurred_at=at(0)))

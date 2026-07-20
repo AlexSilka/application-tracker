@@ -1,25 +1,89 @@
-import { useState } from 'react'
-import { Kpis } from './Kpis'
+import { useEffect, useRef, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { api } from './api'
 import { BoardView } from './Board'
 import { TableView, MetricsView } from './Views'
-import { IconCode, IconPlus, IconSearch, IconSun } from './icons'
+import { IconClock, IconCode, IconPlus, IconSearch, IconSun } from './icons'
 
 type View = 'board' | 'table' | 'metrics'
 
 const TABS: { key: View; label: string }[] = [
-  { key: 'board', label: 'Доска' },
-  { key: 'table', label: 'Таблица' },
-  { key: 'metrics', label: 'Метрики' },
+  { key: 'board', label: 'Board' },
+  { key: 'table', label: 'Table' },
+  { key: 'metrics', label: 'Metrics' },
 ]
+
+// Topbar "needs action" chip: jobs with a due or overdue next action.
+function NeedsAction({ onOpen }: { onOpen: (id: number) => void }) {
+  const { data: m } = useQuery({ queryKey: ['metrics'], queryFn: api.metrics })
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const items = m?.follow_ups ?? []
+  const overdue = items.filter((f) => f.overdue_days > 0).length
+
+  useEffect(() => {
+    if (!open) return
+    const onDoc = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('click', onDoc)
+    return () => document.removeEventListener('click', onDoc)
+  }, [open])
+
+  return (
+    <div className="today-wrap" ref={ref}>
+      <button
+        className="today-chip"
+        title="Show what needs action"
+        onClick={(e) => {
+          e.stopPropagation()
+          setOpen((v) => !v)
+        }}
+      >
+        <IconClock size={14} />
+        <span>
+          <b>{items.length}</b> to do
+          {overdue ? (
+            <>
+              {' · '}
+              <span className="od">{overdue} overdue</span>
+            </>
+          ) : null}
+        </span>
+      </button>
+      {open && (
+        <div className="today-pop">
+          <div className="tp-head">Needs action</div>
+          <div className="tp-list">
+            {items.map((f) => (
+              <button className="tp-item" key={f.id} onClick={() => { setOpen(false); onOpen(f.id) }}>
+                <div className="tp-main">
+                  <div className="tp-role">{f.title}</div>
+                  <div className="tp-co">{f.company}</div>
+                </div>
+                <span className={`next ${f.overdue_days > 0 ? 'overdue' : 'soon'}`}>
+                  {f.overdue_days > 0 ? `overdue ${f.overdue_days}d` : 'today'}
+                </span>
+              </button>
+            ))}
+            {!items.length && <div className="tp-head" style={{ opacity: 0.7 }}>Nothing due 👌</div>}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 function TopBar({
   view,
   onView,
   onToggleTheme,
+  onOpen,
 }: {
   view: View
   onView: (v: View) => void
   onToggleTheme: () => void
+  onOpen: (id: number) => void
 }) {
   return (
     <header className="topbar">
@@ -30,10 +94,10 @@ function TopBar({
             <circle cx="12" cy="12" r="2.6" fill="#fff" stroke="none" />
           </svg>
         </span>
-        Отклики <span className="sub">поиск работы · 2026</span>
+        Application Tracker
       </div>
 
-      <div className="seg" role="tablist" aria-label="Виды">
+      <div className="seg" role="tablist" aria-label="Views">
         {TABS.map((t) => (
           <button key={t.key} role="tab" aria-selected={view === t.key} onClick={() => onView(t.key)}>
             {t.label}
@@ -41,16 +105,18 @@ function TopBar({
         ))}
       </div>
 
+      <NeedsAction onOpen={onOpen} />
+
       <div className="search" aria-hidden>
         <IconSearch />
-        <span>Поиск по компании, роли…</span>
+        <span>Search by company, role…</span>
         <kbd>⌘K</kbd>
       </div>
-      <button className="icon-btn" title="Сменить тему" aria-label="Сменить тему" onClick={onToggleTheme}>
+      <button className="icon-btn" title="Toggle theme" aria-label="Toggle theme" onClick={onToggleTheme}>
         <IconSun />
       </button>
       <button className="btn-primary">
-        <IconPlus /> Добавить
+        <IconPlus /> Add
       </button>
     </header>
   )
@@ -60,7 +126,7 @@ function Footer() {
   return (
     <div className="footer-note">
       <IconCode />
-      Обновляется из веба и через <code>tracker</code> CLI — Claude сам двигает статусы и пишет заметки
+      Updated from the web and via the <code>tracker</code> CLI — Claude moves statuses and writes notes itself
       <span className="spacer" />
       <span className="mono" style={{ fontSize: 11 }}>SQLite · FastAPI · React + TS</span>
     </div>
@@ -78,20 +144,17 @@ export default function App() {
     root.setAttribute('data-theme', isDark ? 'light' : 'dark')
   }
 
+  const openJob = (id: number) => {
+    setSelected(id)
+    setView('board')
+  }
+
   return (
     <div className="app">
-      <TopBar view={view} onView={setView} onToggleTheme={toggleTheme} />
-      <Kpis />
+      <TopBar view={view} onView={setView} onToggleTheme={toggleTheme} onOpen={openJob} />
       <div className="main">
         {view === 'board' && <BoardView selected={selected} onSelect={setSelected} />}
-        {view === 'table' && (
-          <TableView
-            onOpen={(id) => {
-              setSelected(id)
-              setView('board')
-            }}
-          />
-        )}
+        {view === 'table' && <TableView onOpen={openJob} />}
         {view === 'metrics' && <MetricsView />}
       </div>
       <Footer />

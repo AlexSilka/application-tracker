@@ -22,7 +22,7 @@ from tracker.models import (
     WorkMode,
 )
 
-app = typer.Typer(help="Персональный трекер откликов на вакансии.", no_args_is_help=True)
+app = typer.Typer(help="Personal job-application tracker.", no_args_is_help=True)
 
 
 @app.callback()
@@ -35,7 +35,7 @@ def _parse_status(value: str) -> Status:
         return Status(value)
     except ValueError:
         valid = ", ".join(s.value for s in Status)
-        raise typer.BadParameter(f"неизвестный статус «{value}». Допустимо: {valid}")
+        raise typer.BadParameter(f"unknown status '{value}'. Allowed: {valid}")
 
 
 def _fmt_salary(a) -> str:
@@ -47,23 +47,23 @@ def _fmt_salary(a) -> str:
 
 def _line(a) -> str:
     label = STATUS_LABEL.get(a.status, a.status.value)
-    return f"  #{a.id:<3} [{label:<9}] {a.company} — {a.title}  ({a.source})"
+    return f"  #{a.id:<3} [{label:<11}] {a.company} — {a.title}  ({a.source})"
 
 
 # --------------------------------------------------------------------------- #
 @app.command()
 def init() -> None:
-    """Создать БД и таблицы."""
+    """Create the database and tables."""
     init_db()
-    typer.echo("БД готова.")
+    typer.echo("Database ready.")
 
 
 @app.command()
-def seed(force: bool = typer.Option(False, "--force", help="стереть и пересоздать примеры")) -> None:
-    """Наполнить примерами (как в макете)."""
+def seed(force: bool = typer.Option(False, "--force", help="wipe and recreate the sample data")) -> None:
+    """Populate with sample data (matching the mockup)."""
     with open_session() as s:
         n = services.seed(s, force=force)
-    typer.echo(f"Добавлено примеров: {n}" if n else "Данные уже есть (используй --force).")
+    typer.echo(f"Seeded {n} samples." if n else "Data already present (use --force).")
 
 
 @app.command()
@@ -81,12 +81,12 @@ def add(
     work_mode: Optional[str] = typer.Option(None, "--work-mode", help="onsite | hybrid | remote"),
     description: Optional[str] = typer.Option(None, "--description"),
     description_file: Optional[Path] = typer.Option(None, "--description-file"),
-    resume: Optional[str] = typer.Option(None, "--resume", help="версия отправленного резюме"),
-    tags: Optional[str] = typer.Option(None, "--tags", help="через запятую"),
+    resume: Optional[str] = typer.Option(None, "--resume", help="resume version sent"),
+    tags: Optional[str] = typer.Option(None, "--tags", help="comma-separated"),
     next_action: Optional[str] = typer.Option(None, "--next-action"),
     next_action_date: Optional[str] = typer.Option(None, "--next-action-date", help="YYYY-MM-DD"),
 ) -> None:
-    """Добавить вакансию."""
+    """Add a job."""
     desc = description or ""
     if description_file:
         desc = description_file.read_text(encoding="utf-8")
@@ -110,7 +110,7 @@ def add(
     )
     with open_session() as s:
         a = services.create_application(s, payload)
-        typer.echo(f"Добавлено #{a.id}: {a.company} — {a.title}")
+        typer.echo(f"Added #{a.id}: {a.company} — {a.title}")
 
 
 @app.command("list")
@@ -118,45 +118,45 @@ def list_apps(
     status: Optional[str] = typer.Option(None, "--status"),
     source: Optional[str] = typer.Option(None, "--source"),
 ) -> None:
-    """Список вакансий."""
+    """List jobs."""
     with open_session() as s:
         apps = services.list_applications(
             s, status=_parse_status(status) if status else None, source=source
         )
     if not apps:
-        typer.echo("Пусто.")
+        typer.echo("Empty.")
         return
     for a in apps:
         typer.echo(_line(a))
-    typer.echo(f"\nВсего: {len(apps)}")
+    typer.echo(f"\nTotal: {len(apps)}")
 
 
 @app.command()
 def show(app_id: int = typer.Argument(..., metavar="ID")) -> None:
-    """Показать вакансию и её таймлайн."""
+    """Show a job and its timeline."""
     with open_session() as s:
         try:
             a = services.get_application(s, app_id)
         except services.NotFound:
-            typer.secho(f"#{app_id} не найдено", fg="red")
+            typer.secho(f"#{app_id} not found", fg="red")
             raise typer.Exit(1)
         typer.secho(f"#{a.id}  {a.company} — {a.title}", bold=True)
-        typer.echo(f"  статус:     {STATUS_LABEL.get(a.status, a.status.value)}")
-        typer.echo(f"  канал:      {a.source}")
-        typer.echo(f"  приоритет:  {'★' * a.priority}{'☆' * (5 - a.priority)}")
-        typer.echo(f"  зарплата:   {_fmt_salary(a)}")
+        typer.echo(f"  status:    {STATUS_LABEL.get(a.status, a.status.value)}")
+        typer.echo(f"  channel:   {a.source}")
+        typer.echo(f"  priority:  {'★' * a.priority}{'☆' * (5 - a.priority)}")
+        typer.echo(f"  salary:    {_fmt_salary(a)}")
         if a.location:
-            typer.echo(f"  локация:    {a.location} ({a.work_mode.value if a.work_mode else '—'})")
+            typer.echo(f"  location:  {a.location} ({a.work_mode.value if a.work_mode else '—'})")
         if a.resume_version:
-            typer.echo(f"  резюме:     {a.resume_version}")
+            typer.echo(f"  resume:    {a.resume_version}")
         if a.next_action:
             when = f" — {a.next_action_date}" if a.next_action_date else ""
-            typer.echo(f"  next:       {a.next_action}{when}")
+            typer.echo(f"  next:      {a.next_action}{when}")
         if a.contact_name:
-            typer.echo(f"  контакт:    {a.contact_name} {a.contact_email or ''}")
+            typer.echo(f"  contact:   {a.contact_name} {a.contact_email or ''}")
         if a.description:
-            typer.echo(f"\n  Вакансия:\n    {a.description[:300]}")
-        typer.echo("\n  Таймлайн:")
+            typer.echo(f"\n  Job:\n    {a.description[:300]}")
+        typer.echo("\n  Timeline:")
         for e in a.events:
             when = e.occurred_at.date().isoformat()
             typer.echo(f"    {when}  [{e.kind.value}] {e.body}")
@@ -170,7 +170,7 @@ def apply(
     cover_letter: Optional[str] = typer.Option(None, "--cover-letter"),
     cover_letter_file: Optional[Path] = typer.Option(None, "--cover-letter-file"),
 ) -> None:
-    """Отметить как поданное: ставит статус applied и логирует, что и куда отправили."""
+    """Mark as applied: sets status to applied and logs what/where you sent."""
     cover = cover_letter
     if cover_letter_file:
         cover = cover_letter_file.read_text(encoding="utf-8")
@@ -182,9 +182,9 @@ def apply(
             services.update_application(s, app_id, patch)
             a = services.set_status(s, app_id, Status.applied)
         except services.NotFound:
-            typer.secho(f"#{app_id} не найдено", fg="red")
+            typer.secho(f"#{app_id} not found", fg="red")
             raise typer.Exit(1)
-    typer.echo(f"#{a.id} → Отклик отправлен ({a.source}, резюме {a.resume_version or '—'})")
+    typer.echo(f"#{a.id} → Applied ({a.source}, resume {a.resume_version or '—'})")
 
 
 @app.command()
@@ -193,13 +193,13 @@ def status(
     new_status: str = typer.Argument(..., metavar="STATUS"),
     note: Optional[str] = typer.Option(None, "--note", "-n"),
 ) -> None:
-    """Сменить статус (с авто-событием в таймлайне)."""
+    """Change status (auto-logs a timeline event)."""
     st = _parse_status(new_status)
     with open_session() as s:
         try:
             a = services.set_status(s, app_id, st, note=note)
         except services.NotFound:
-            typer.secho(f"#{app_id} не найдено", fg="red")
+            typer.secho(f"#{app_id} not found", fg="red")
             raise typer.Exit(1)
     typer.echo(f"#{a.id} → {STATUS_LABEL.get(a.status, a.status.value)}")
 
@@ -209,14 +209,14 @@ def note(
     app_id: int = typer.Argument(..., metavar="ID"),
     text: str = typer.Argument(...),
 ) -> None:
-    """Добавить заметку в таймлайн."""
+    """Add a note to the timeline."""
     with open_session() as s:
         try:
             services.add_event(s, app_id, EventKind.note, body=text)
         except services.NotFound:
-            typer.secho(f"#{app_id} не найдено", fg="red")
+            typer.secho(f"#{app_id} not found", fg="red")
             raise typer.Exit(1)
-    typer.echo(f"#{app_id}: заметка добавлена")
+    typer.echo(f"#{app_id}: note added")
 
 
 @app.command("set")
@@ -229,7 +229,7 @@ def set_fields(
     contact_name: Optional[str] = typer.Option(None, "--contact-name"),
     contact_email: Optional[str] = typer.Option(None, "--contact-email"),
 ) -> None:
-    """Обновить отдельные поля вакансии."""
+    """Update individual job fields."""
     patch = ApplicationUpdate(
         next_action=next_action,
         next_action_date=date.fromisoformat(next_action_date) if next_action_date else None,
@@ -242,36 +242,36 @@ def set_fields(
         try:
             services.update_application(s, app_id, patch)
         except services.NotFound:
-            typer.secho(f"#{app_id} не найдено", fg="red")
+            typer.secho(f"#{app_id} not found", fg="red")
             raise typer.Exit(1)
-    typer.echo(f"#{app_id}: обновлено")
+    typer.echo(f"#{app_id}: updated")
 
 
 @app.command()
 def metrics() -> None:
-    """Показать метрики воронки."""
+    """Show funnel metrics."""
     with open_session() as s:
         m = services.metrics(s)
     f = m["funnel"]
     c = m["conversions"]
-    typer.secho("Воронка", bold=True)
-    typer.echo(f"  подано:    {f['applied']}")
-    typer.echo(f"  скрининг:  {f['screening']}")
-    typer.echo(f"  интервью:  {f['interview']}")
-    typer.echo(f"  оффер:     {f['offer']}")
-    typer.echo(f"  принят:    {f['accepted']}")
-    typer.secho("\nКонверсии", bold=True)
-    typer.echo(f"  отклик → интервью:  {c['applied_to_interview']}%")
-    typer.echo(f"  интервью → оффер:   {c['interview_to_offer']}%")
-    typer.echo(f"  response rate:      {c['response_rate']}%")
+    typer.secho("Funnel", bold=True)
+    typer.echo(f"  applied:     {f['applied']}")
+    typer.echo(f"  in contact:  {f['screening']}")
+    typer.echo(f"  interview:   {f['interview']}")
+    typer.echo(f"  offer:       {f['offer']}")
+    typer.echo(f"  accepted:    {f['accepted']}")
+    typer.secho("\nConversions", bold=True)
+    typer.echo(f"  applied → interview:  {c['applied_to_interview']}%")
+    typer.echo(f"  interview → offer:    {c['interview_to_offer']}%")
+    typer.echo(f"  response rate:        {c['response_rate']}%")
     if m["by_channel"]:
-        typer.secho("\nПо каналам", bold=True)
+        typer.secho("\nBy channel", bold=True)
         for ch in m["by_channel"]:
             typer.echo(f"  {ch['source']:<14} {ch['interview']}/{ch['applied']} → {ch['rate']}%")
     if m["follow_ups"]:
-        typer.secho("\nFollow-up сегодня", bold=True)
+        typer.secho("\nFollow-ups today", bold=True)
         for fu in m["follow_ups"]:
-            tag = f"просрочен {fu['overdue_days']}д" if fu["overdue_days"] > 0 else "сегодня"
+            tag = f"overdue {fu['overdue_days']}d" if fu["overdue_days"] > 0 else "today"
             typer.echo(f"  #{fu['id']} {fu['company']} — {fu['next_action']} ({tag})")
 
 
@@ -281,7 +281,7 @@ def serve(
     port: int = typer.Option(8787, "--port"),
     reload: bool = typer.Option(False, "--reload"),
 ) -> None:
-    """Запустить REST API (для веб-интерфейса)."""
+    """Run the REST API (for the web UI)."""
     import uvicorn
 
     uvicorn.run("tracker.api:app", host=host, port=port, reload=reload)

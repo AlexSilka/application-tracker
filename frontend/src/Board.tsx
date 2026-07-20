@@ -11,17 +11,8 @@ import {
 } from '@dnd-kit/core'
 import { api, type Application, type Status } from './api'
 import { KIND_LABEL, SRC_COLOR, STATUS_LABEL, WORK_MODE_LABEL } from './constants'
-import { avatarColor, daysUntil, fmtDate, fmtDateTime, formatSalary, initials, stageAge } from './lib'
+import { daysUntil, fmtDate, fmtDateTime, formatSalary, stageAge } from './lib'
 import { IconCheck, IconClock, IconClose, IconDoc, IconLines } from './icons'
-
-export function Stars({ n }: { n: number }) {
-  return (
-    <span className="stars">
-      {'★'.repeat(n)}
-      <span className="off">{'★'.repeat(5 - n)}</span>
-    </span>
-  )
-}
 
 function NextPill({ app }: { app: Application }) {
   if (!app.next_action && !app.next_action_date) return <span className="age">—</span>
@@ -31,10 +22,10 @@ function NextPill({ app }: { app: Application }) {
     const d = daysUntil(app.next_action_date)
     if (d < 0) {
       cls = 'next overdue'
-      text = `просрочен ${-d}д`
+      text = `overdue ${-d}d`
     } else if (d <= 2) {
       cls = 'next soon'
-      text = `${text} · ${d === 0 ? 'сегодня' : d + 'д'}`
+      text = `${text} · ${d === 0 ? 'today' : `in ${d}d`}`
     }
   }
   return <span className={cls}>{text}</span>
@@ -67,9 +58,6 @@ function Card({
       onClick={() => onSelect(app.id)}
     >
       <div className="card-top">
-        <div className="avatar" style={{ background: avatarColor(app.company) }}>
-          {initials(app.company)}
-        </div>
         <div className="card-co">{app.company}</div>
       </div>
       <div className="card-title">{app.title}</div>
@@ -79,10 +67,9 @@ function Card({
           {app.source}
         </span>
         {salary && <span className="chip salary">{salary}</span>}
-        <Stars n={app.priority} />
       </div>
       <div className="card-foot">
-        <span className="age">{app.applied_at ? stageAge(app.updated_at) : 'не подано'}</span>
+        <span className="age">{app.applied_at ? stageAge(app.updated_at) : 'not applied'}</span>
         <NextPill app={app} />
       </div>
     </div>
@@ -124,12 +111,12 @@ function ArchiveColumn({ items }: { items: Application[] }) {
     <div className="col">
       <div className="col-head">
         <span className="dot" style={{ background: 'var(--st-ghosted)' }} />
-        <span className="name">Архив</span>
+        <span className="name">Archive</span>
         <span className="count">{items.length}</span>
       </div>
       <div className="col-body">
         <div className="col-archived-box">
-          <b>{items.length}</b> закрытых вакансий
+          <b>{items.length}</b> closed
           <div className="row">
             {Object.entries(counts).map(([s, n]) => (
               <span key={s} className="chip">
@@ -164,7 +151,7 @@ export function BoardView({
   })
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
-  if (!meta || !apps) return <div className="board-wrap"><div className="loading">Загрузка…</div></div>
+  if (!meta || !apps) return <div className="board-wrap"><div className="loading">Loading…</div></div>
 
   const active = meta.active_statuses
   const terminalSet = new Set<string>(meta.terminal_statuses)
@@ -214,7 +201,7 @@ function TimelineNode({ meta, first }: { meta?: Record<string, unknown> | null; 
 
 function DetailDrawer({ id, onClose }: { id: number; onClose: () => void }) {
   const { data: app } = useQuery({ queryKey: ['app', id], queryFn: () => api.get(id) })
-  if (!app) return <aside className="drawer"><div className="loading">Загрузка…</div></aside>
+  if (!app) return <aside className="drawer"><div className="loading">Loading…</div></aside>
 
   const salary = formatSalary(app)
   const sub = [app.location, app.work_mode ? WORK_MODE_LABEL[app.work_mode] ?? app.work_mode : null]
@@ -222,17 +209,14 @@ function DetailDrawer({ id, onClose }: { id: number; onClose: () => void }) {
     .join(' · ')
 
   return (
-    <aside className="drawer" aria-label="Карточка вакансии">
+    <aside className="drawer" aria-label="Job details">
       <div className="drawer-head">
         <div className="drawer-top">
-          <div className="avatar" style={{ background: avatarColor(app.company) }}>
-            {initials(app.company)}
-          </div>
           <div>
             <div className="drawer-title">{app.title}</div>
             <div className="drawer-co">{app.company}{sub ? ` · ${sub}` : ''}</div>
           </div>
-          <button className="icon-btn drawer-close" aria-label="Закрыть" onClick={onClose}>
+          <button className="icon-btn drawer-close" aria-label="Close" onClick={onClose}>
             <IconClose />
           </button>
         </div>
@@ -245,7 +229,6 @@ function DetailDrawer({ id, onClose }: { id: number; onClose: () => void }) {
             <span className="cdot" style={{ background: SRC_COLOR[app.source] ?? 'var(--st-saved)' }} />
             {app.source}
           </span>
-          <span className="chip"><Stars n={app.priority} /></span>
         </div>
       </div>
 
@@ -254,48 +237,47 @@ function DetailDrawer({ id, onClose }: { id: number; onClose: () => void }) {
           <div className="next-banner">
             <span className="ico"><IconClock /></span>
             <div>
-              Дальше: <b>{app.next_action}</b>
+              Next: <b>{app.next_action}</b>
               {app.next_action_date ? ` — ${fmtDate(app.next_action_date)}` : ''}
             </div>
           </div>
         )}
 
         <div>
-          <div className="sect-label"><IconLines /> Вакансия</div>
+          <div className="sect-label"><IconLines /> Description</div>
           {app.description ? (
             <p className="jd">{app.description}</p>
           ) : (
-            <p className="jd empty">Описание не сохранено</p>
+            <p className="jd empty">No description saved</p>
           )}
           {app.job_url && (
             <p style={{ marginTop: 8 }}>
               <a href={app.job_url} target="_blank" rel="noreferrer"
                  style={{ color: 'var(--accent)', fontSize: 13, textDecoration: 'none' }}>
-                Открыть вакансию ↗
+                Open posting ↗
               </a>
             </p>
           )}
         </div>
 
         <div>
-          <div className="sect-label">Что отправили</div>
+          <div className="sect-label">Submitted</div>
           {app.resume_version ? (
             <div className="doc-line">
               <IconDoc />
               <span className="fname">{app.resume_version}</span>
-              <span className="tag">резюме</span>
+              <span className="tag">resume</span>
             </div>
           ) : (
-            <p className="jd empty">Резюме не указано</p>
+            <p className="jd empty">No resume specified</p>
           )}
-          {app.cover_letter && <p className="cover">«{app.cover_letter}»</p>}
+          {app.cover_letter && <p className="cover">“{app.cover_letter}”</p>}
         </div>
 
         {(app.contact_name || app.contact_email) && (
           <div>
-            <div className="sect-label">Контакт</div>
+            <div className="sect-label">Contact</div>
             <div className="contact">
-              <div className="avatar">{initials(app.contact_name ?? '—')}</div>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{app.contact_name}</div>
                 <div style={{ fontSize: 12, color: 'var(--text-3)' }}>
@@ -311,7 +293,7 @@ function DetailDrawer({ id, onClose }: { id: number; onClose: () => void }) {
         )}
 
         <div>
-          <div className="sect-label">Таймлайн</div>
+          <div className="sect-label">Timeline</div>
           <div className="timeline">
             {app.events.map((e, i) => (
               <div className="tl" key={e.id}>
@@ -331,9 +313,9 @@ function DetailDrawer({ id, onClose }: { id: number; onClose: () => void }) {
       </div>
 
       <div className="drawer-actions">
-        <button className="primary">Сменить статус</button>
-        <button>Заметка</button>
-        {app.job_url && <button onClick={() => window.open(app.job_url!, '_blank')}>Открыть ↗</button>}
+        <button className="primary">Change status</button>
+        <button>Note</button>
+        {app.job_url && <button onClick={() => window.open(app.job_url!, '_blank')}>Open ↗</button>}
       </div>
     </aside>
   )

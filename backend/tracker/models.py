@@ -62,17 +62,18 @@ RANK_BY_VALUE: dict[str, int] = {s.value: r for s, r in STATUS_RANK.items()}
 ACTIVE_STATUSES = [Status.saved, Status.applied, Status.screening, Status.interview, Status.offer]
 TERMINAL_STATUSES = [Status.accepted, Status.rejected, Status.withdrawn, Status.ghosted]
 
-# Russian labels for CLI output and auto-generated event text.
+# Human-readable labels for CLI output, /api/meta and auto-generated event text.
+# `screening` shows as "In Contact" per the design (a substantive employer reply).
 STATUS_LABEL: dict[Status, str] = {
-    Status.saved: "Сохранено",
-    Status.applied: "Отклик",
-    Status.screening: "Скрининг",
-    Status.interview: "Интервью",
-    Status.offer: "Оффер",
-    Status.accepted: "Принят",
-    Status.rejected: "Отказ",
-    Status.withdrawn: "Снят",
-    Status.ghosted: "Тишина",
+    Status.saved: "Saved",
+    Status.applied: "Applied",
+    Status.screening: "In Contact",
+    Status.interview: "Interview",
+    Status.offer: "Offer",
+    Status.accepted: "Accepted",
+    Status.rejected: "Rejected",
+    Status.withdrawn: "Withdrawn",
+    Status.ghosted: "Ghosted",
 }
 
 # Channels for a mixed RU + international search (chosen by the user).

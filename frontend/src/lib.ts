@@ -1,22 +1,5 @@
 // Small presentation helpers shared across components.
 
-const PALETTE = [
-  '#2A6FF0', '#00C56E', '#E0A400', '#7B5CE0', '#FF6C37',
-  '#EC2027', '#1F8AF0', '#7A48D6', '#0EA5B7', '#E0498B',
-]
-
-export function avatarColor(name: string): string {
-  let h = 0
-  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0
-  return PALETTE[h % PALETTE.length]
-}
-
-export function initials(name: string): string {
-  const parts = name.trim().split(/\s+/)
-  const s = parts.length > 1 ? parts[0][0] + parts[1][0] : name.slice(0, 2)
-  return s.toUpperCase()
-}
-
 function currencySymbol(cur?: string | null): string {
   if (cur === 'RUB') return '₽'
   if (cur === 'EUR') return '€'
@@ -25,7 +8,7 @@ function currencySymbol(cur?: string | null): string {
 }
 
 function shorten(n: number): string {
-  return n >= 1000 && n % 1000 === 0 ? `${n / 1000}k` : n.toLocaleString('ru-RU')
+  return n >= 1000 && n % 1000 === 0 ? `${n / 1000}k` : n.toLocaleString('en-US')
 }
 
 export function formatSalary(a: {
@@ -61,15 +44,15 @@ export function daysUntil(iso: string): number {
 
 export function stageAge(iso: string): string {
   const d = daysSince(iso)
-  if (d === 0) return 'сегодня'
-  return `в стадии ${d}д`
+  if (d === 0) return 'today'
+  return `${d}d in stage`
 }
 
-const MONTHS = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 export function fmtDate(iso: string): string {
   const d = new Date(iso)
-  return `${d.getDate()} ${MONTHS[d.getMonth()]}`
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}`
 }
 
 export function fmtDateTime(iso: string): string {
@@ -78,5 +61,5 @@ export function fmtDateTime(iso: string): string {
   const time = hasTime
     ? ` · ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
     : ''
-  return `${d.getDate()} ${MONTHS[d.getMonth()]}${time}`
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}${time}`
 }
