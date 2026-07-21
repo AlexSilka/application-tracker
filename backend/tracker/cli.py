@@ -48,7 +48,7 @@ def _fmt_salary(a) -> str:
 
 def _line(a) -> str:
     label = STATUS_LABEL.get(a.status, a.status.value)
-    return f"  #{a.id:<3} [{label:<11}] {a.company} — {a.title}  ({a.source})"
+    return f"  #{a.id:<3} [{label:<11}] {a.company} — {a.title}  ({a.applied_via})"
 
 
 def _attach_resume(session, app_id: int, path: Path):
@@ -80,8 +80,10 @@ def seed(force: bool = typer.Option(False, "--force", help="wipe and recreate th
 def add(
     company: str = typer.Option(..., "--company", "-c"),
     title: str = typer.Option(..., "--title", "-t"),
-    url: Optional[str] = typer.Option(None, "--url"),
-    source: str = typer.Option("other", "--source", help="linkedin | hh.ru | referral | ..."),
+    found_via: Optional[str] = typer.Option(None, "--found-via", help="where you found it: linkedin | hh.ru | aggregator | ..."),
+    found_url: Optional[str] = typer.Option(None, "--found-url", help="link to the posting where you found it"),
+    applied_via: str = typer.Option("other", "--applied-via", help="how you applied: email | company site | linkedin | ..."),
+    applied_ref: Optional[str] = typer.Option(None, "--applied-ref", help="exact apply target — a URL or an email"),
     status: str = typer.Option("saved", "--status"),
     priority: int = typer.Option(3, "--priority", "-p", min=1, max=5),
     salary_min: Optional[int] = typer.Option(None, "--salary-min"),
@@ -102,8 +104,10 @@ def add(
     payload = ApplicationCreate(
         company=company,
         title=title,
-        job_url=url,
-        source=source,
+        found_via=found_via,
+        found_url=found_url,
+        applied_via=applied_via,
+        applied_ref=applied_ref,
         status=_parse_status(status),
         priority=priority,
         salary_min=salary_min,
@@ -124,12 +128,12 @@ def add(
 @app.command("list")
 def list_apps(
     status: Optional[str] = typer.Option(None, "--status"),
-    source: Optional[str] = typer.Option(None, "--source"),
+    applied_via: Optional[str] = typer.Option(None, "--applied-via"),
 ) -> None:
     """List jobs."""
     with open_session() as s:
         apps = services.list_applications(
-            s, status=_parse_status(status) if status else None, source=source
+            s, status=_parse_status(status) if status else None, applied_via=applied_via
         )
     if not apps:
         typer.echo("Empty.")
@@ -150,7 +154,10 @@ def show(app_id: int = typer.Argument(..., metavar="ID")) -> None:
             raise typer.Exit(1)
         typer.secho(f"#{a.id}  {a.company} — {a.title}", bold=True)
         typer.echo(f"  status:    {STATUS_LABEL.get(a.status, a.status.value)}")
-        typer.echo(f"  channel:   {a.source}")
+        typer.echo(f"  applied:   {a.applied_via}" + (f" → {a.applied_ref}" if a.applied_ref else ""))
+        if a.found_via or a.found_url:
+            found = a.found_via or "—"
+            typer.echo(f"  found:     {found}" + (f" ({a.found_url})" if a.found_url else ""))
         typer.echo(f"  priority:  {'★' * a.priority}{'☆' * (5 - a.priority)}")
         typer.echo(f"  salary:    {_fmt_salary(a)}")
         if a.location:
@@ -173,7 +180,8 @@ def show(app_id: int = typer.Argument(..., metavar="ID")) -> None:
 @app.command()
 def apply(
     app_id: int = typer.Argument(..., metavar="ID"),
-    source: Optional[str] = typer.Option(None, "--source"),
+    applied_via: Optional[str] = typer.Option(None, "--applied-via"),
+    applied_ref: Optional[str] = typer.Option(None, "--applied-ref", help="exact apply target — a URL or an email"),
     resume_file: Optional[Path] = typer.Option(None, "--resume-file", help="resume file sent"),
     cover_letter: Optional[str] = typer.Option(None, "--cover-letter"),
     cover_letter_file: Optional[Path] = typer.Option(None, "--cover-letter-file"),
@@ -182,7 +190,16 @@ def apply(
     cover = cover_letter
     if cover_letter_file:
         cover = cover_letter_file.read_text(encoding="utf-8")
-    patch = ApplicationUpdate(source=source, cover_letter=cover)
+    # Only patch fields the user actually passed — building the update with explicit
+    # Nones would clear any applied_via / applied_ref / cover already on the record.
+    updates: dict = {}
+    if applied_via is not None:
+        updates["applied_via"] = applied_via
+    if applied_ref is not None:
+        updates["applied_ref"] = applied_ref
+    if cover is not None:
+        updates["cover_letter"] = cover
+    patch = ApplicationUpdate(**updates)
     with open_session() as s:
         try:
             services.update_application(s, app_id, patch)
@@ -192,7 +209,7 @@ def apply(
         except services.NotFound:
             typer.secho(f"#{app_id} not found", fg="red")
             raise typer.Exit(1)
-    typer.echo(f"#{a.id} → Applied ({a.source})")
+    typer.echo(f"#{a.id} → Applied ({a.applied_via})")
 
 
 @app.command()
@@ -295,7 +312,7 @@ def metrics() -> None:
     if m["by_channel"]:
         typer.secho("\nBy channel", bold=True)
         for ch in m["by_channel"]:
-            typer.echo(f"  {ch['source']:<14} {ch['interview']}/{ch['applied']} → {ch['rate']}%")
+            typer.echo(f"  {ch['applied_via']:<14} {ch['interview']}/{ch['applied']} → {ch['rate']}%")
     if m["follow_ups"]:
         typer.secho("\nFollow-ups today", bold=True)
         for fu in m["follow_ups"]:

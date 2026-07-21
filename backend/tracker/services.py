@@ -37,14 +37,14 @@ class NotFound(Exception):
 def list_applications(
     session: Session,
     status: Optional[Status] = None,
-    source: Optional[str] = None,
+    applied_via: Optional[str] = None,
     q: Optional[str] = None,
 ) -> list[Application]:
     stmt = select(Application)
     if status is not None:
         stmt = stmt.where(Application.status == status)
-    if source is not None:
-        stmt = stmt.where(Application.source == source)
+    if applied_via is not None:
+        stmt = stmt.where(Application.applied_via == applied_via)
     stmt = stmt.order_by(Application.updated_at.desc())
     apps = list(session.exec(stmt).all())
     if q:
@@ -104,7 +104,7 @@ def create_application(session: Session, data: ApplicationCreate) -> Application
             Event(
                 application_id=app.id,
                 kind=EventKind.status_change,
-                body=f"Applied · {app.source}",
+                body=f"Applied · {app.applied_via}",
                 meta={"from": Status.saved.value, "to": Status.applied.value},
                 occurred_at=now,
             )
@@ -280,13 +280,13 @@ def metrics(session: Session) -> dict:
     for a in apps:
         if reached[a.id] < STATUS_RANK[Status.applied]:
             continue
-        c = channels.setdefault(a.source, {"applied": 0, "interview": 0})
+        c = channels.setdefault(a.applied_via, {"applied": 0, "interview": 0})
         c["applied"] += 1
         if reached[a.id] >= STATUS_RANK[Status.interview]:
             c["interview"] += 1
     by_channel = [
         {
-            "source": src,
+            "applied_via": src,
             "applied": c["applied"],
             "interview": c["interview"],
             "rate": _pct(c["interview"], c["applied"]),
@@ -350,26 +350,30 @@ def seed(session: Session, force: bool = False) -> int:
         return now - timedelta(days=n)
 
     samples = [
-        dict(company="Avito", title="Senior Backend Engineer (Python)", source="hh.ru",
+        dict(company="Avito", title="Senior Backend Engineer (Python)", applied_via="hh.ru",
              status=Status.saved, priority=4, salary_min=400000, salary_max=550000, currency="RUB",
              location="Moscow", work_mode="remote", tags=["python", "postgres"]),
-        dict(company="Miro", title="Software Engineer, Platform", source="linkedin",
+        dict(company="Miro", title="Software Engineer, Platform", applied_via="linkedin",
              status=Status.saved, priority=3, salary_min=70000, salary_max=90000, currency="EUR",
              location="Amsterdam", work_mode="hybrid", tags=["go", "kubernetes"]),
-        dict(company="Nebius", title="Backend Engineer", source="linkedin", status=Status.applied,
+        dict(company="Nebius", title="Backend Engineer",
+             found_via="linkedin", applied_via="linkedin",
+             applied_ref="https://linkedin.com/jobs/view/3901847221", status=Status.applied,
              priority=4, salary_min=75000, salary_max=95000, currency="EUR", location="Belgrade",
              work_mode="hybrid", applied_days=3,
              next_action="first follow-up", next_after=4, tags=["python", "grpc"]),
-        dict(company="Wildberries", title="Python Developer", source="company site",
+        dict(company="Wildberries", title="Python Developer",
+             found_via="hh.ru", found_url="https://hh.ru/vacancy/88451020",
+             applied_via="company site", applied_ref="https://career.wildberries.ru/vacancy/1042",
              status=Status.applied, priority=3, salary_min=350000, salary_max=480000, currency="RUB",
              location="Moscow", work_mode="onsite", applied_days=9,
              next_action="follow-up — no reply", next_after=-2, tags=["python", "django"]),
-        dict(company="JetBrains", title="Software Developer, YouTrack", source="referral",
+        dict(company="JetBrains", title="Software Developer, YouTrack", applied_via="referral",
              status=Status.screening, priority=5, salary_min=80000, salary_max=110000, currency="EUR",
              location="Prague", work_mode="hybrid", applied_days=5,
              next_action="recruiter call", next_after=1,
              contact_name="Anna K.", contact_email="anna@jetbrains.com", tags=["kotlin", "python"]),
-        dict(company="Yandex", title="Senior Software Engineer", source="referral",
+        dict(company="Yandex", title="Senior Software Engineer", applied_via="referral",
              status=Status.interview, priority=5, salary_min=380000, salary_max=520000, currency="RUB",
              location="Moscow", work_mode="hybrid", applied_days=12,
              next_action="tech interview (coding)", next_after=2,
@@ -382,20 +386,23 @@ def seed(session: Session, force: bool = False) -> int:
                          "Stack: Python, Go, PostgreSQL, ClickHouse, Kubernetes. You'll design "
                          "distributed event-processing services handling up to 1M RPS, cut pipeline "
                          "latency, and mentor. 5+ years of experience required.",
-             job_url="https://yandex.ru/jobs/vacancies/12345", tags=["python", "go", "clickhouse"]),
-        dict(company="Toloka", title="ML Platform Engineer", source="linkedin",
+             found_via="referral", found_url="https://yandex.ru/jobs/vacancies/12345",
+             tags=["python", "go", "clickhouse"]),
+        dict(company="Toloka", title="ML Platform Engineer", applied_via="linkedin",
              status=Status.interview, priority=4, salary_min=70000, salary_max=90000, currency="EUR",
              location="Remote", work_mode="remote", applied_days=8,
              next_action="stage 2 of 3", next_after=3, tags=["python", "ml", "airflow"]),
-        dict(company="Datadog", title="Software Engineer, Backend", source="linkedin",
+        dict(company="Datadog", title="Software Engineer, Backend", applied_via="linkedin",
              status=Status.offer, priority=5, salary_min=95000, salary_max=95000, currency="EUR",
              location="Paris", work_mode="hybrid", applied_days=21,
              next_action="reply to the offer", next_after=5, tags=["go", "python"]),
-        dict(company="Ozon", title="Backend Engineer", source="hh.ru", status=Status.rejected,
+        dict(company="Ozon", title="Backend Engineer",
+             found_via="aggregator", found_url="https://gorod.work/vacancy/ozon-backend-2291",
+             applied_via="email", applied_ref="jobs@ozon.ru", status=Status.rejected,
              priority=3, salary_min=300000, salary_max=420000, currency="RUB", location="Moscow",
              work_mode="hybrid", applied_days=18, reached=Status.screening,
              tags=["go"]),
-        dict(company="Notion", title="Software Engineer", source="linkedin", status=Status.ghosted,
+        dict(company="Notion", title="Software Engineer", applied_via="linkedin", status=Status.ghosted,
              priority=4, salary_min=140000, salary_max=170000, currency="USD", location="Remote (US)",
              work_mode="remote", applied_days=27, tags=["typescript"]),
     ]
@@ -445,7 +452,7 @@ def _seed_timeline(session: Session, app: Application, status: Status, applied_d
     target_rank = STATUS_RANK.get(target, STATUS_RANK[Status.applied])
 
     session.add(Event(application_id=app.id, kind=EventKind.status_change,
-                      body=f"Applied · {app.source}",
+                      body=f"Applied · {app.applied_via}",
                       meta={"from": Status.saved.value, "to": Status.applied.value},
                       occurred_at=at(applied_days)))
 

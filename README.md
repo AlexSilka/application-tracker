@@ -91,10 +91,11 @@ web API, so it works whether or not the server is running. Run it from
 
 ```bash
 tracker add -c "Acme" -t "Senior Backend Engineer" \
-            --url https://... --source linkedin --description-file jd.md
+            --found-via linkedin --found-url https://... --description-file jd.md
 tracker list [--status applied]
 tracker show 12
-tracker apply 12 --source linkedin --resume-file resume-backend-v3.pdf --cover-letter-file cl.md
+tracker apply 12 --applied-via email --applied-ref jobs@acme.com \
+                 --resume-file resume-backend-v3.pdf --cover-letter-file cl.md
 tracker resume 12 resume-backend-v3.pdf      # attach / replace the resume file (or --remove)
 tracker status 12 interview --note "passed the HR screen, system design next"
 tracker note 12 "recruiter promised an answer by Friday"
@@ -123,7 +124,7 @@ before an interview is scheduled.
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| `GET` | `/api/applications?status=&source=&q=` | list with filters |
+| `GET` | `/api/applications?status=&applied_via=&q=` | list with filters |
 | `POST` | `/api/applications` | create |
 | `GET` | `/api/applications/{id}` | one application + its timeline |
 | `PATCH` | `/api/applications/{id}` | partial update |

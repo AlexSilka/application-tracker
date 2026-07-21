@@ -76,16 +76,30 @@ STATUS_LABEL: dict[Status, str] = {
     Status.ghosted: "Ghosted",
 }
 
-# Channels for a mixed RU + international search (chosen by the user).
-SOURCES = [
+# A channel has two facets we track on separate fields (see Application):
+#   found_via   — where the job was first spotted (first-touch / discovery surface)
+#   applied_via — how the application was actually submitted (last-touch; the funnel
+#                 groups on this, so it stays a small, stable set of apply mechanisms)
+# Both are suggested-not-enforced: the column is a plain string and these lists just
+# feed the dropdowns. A mixed RU + international search, so both span both worlds.
+FOUND_VIA = [
     "linkedin",
     "hh.ru",
     "indeed",
+    "aggregator",
+    "telegram",
+    "google",
+    "referral",
     "company site",
+    "other",
+]
+APPLIED_VIA = [
+    "linkedin",
+    "email",
+    "company site",
+    "hh.ru",
     "referral",
     "recruiter",
-    "telegram",
-    "email",
     "other",
 ]
 
@@ -99,7 +113,10 @@ class Application(SQLModel, table=True):
     company: str
     title: str
     description: str = ""  # full job description — we keep the JD verbatim
-    job_url: Optional[str] = None
+
+    # WHERE we found it (first-touch): the discovery channel + the listing link we saw.
+    found_via: Optional[str] = None  # linkedin | hh.ru | aggregator | referral | ...
+    found_url: Optional[str] = None  # link to the posting where we found it
 
     location: Optional[str] = None
     work_mode: Optional[WorkMode] = None
@@ -107,7 +124,11 @@ class Application(SQLModel, table=True):
     salary_max: Optional[int] = None
     currency: Optional[str] = None
 
-    source: str = "other"  # WHERE we applied
+    # HOW we applied (last-touch): the channel the funnel groups on + the exact
+    # destination we sent it to (a company-site URL or an email address).
+    applied_via: str = "other"  # email | company site | linkedin | referral | ...
+    applied_ref: Optional[str] = None  # exact apply target — a URL or an email
+
     status: Status = Field(default=Status.saved, index=True)
     priority: int = 3  # 1..5, how much we want it
 
@@ -181,13 +202,15 @@ class ApplicationCreate(SQLModel):
     company: str
     title: str
     description: str = ""
-    job_url: Optional[str] = None
+    found_via: Optional[str] = None
+    found_url: Optional[str] = None
     location: Optional[str] = None
     work_mode: Optional[WorkMode] = None
     salary_min: Optional[int] = None
     salary_max: Optional[int] = None
     currency: Optional[str] = None
-    source: str = "other"
+    applied_via: str = "other"
+    applied_ref: Optional[str] = None
     status: Status = Status.saved
     priority: int = 3
     cover_letter: Optional[str] = None
@@ -203,13 +226,15 @@ class ApplicationUpdate(SQLModel):
     company: Optional[str] = None
     title: Optional[str] = None
     description: Optional[str] = None
-    job_url: Optional[str] = None
+    found_via: Optional[str] = None
+    found_url: Optional[str] = None
     location: Optional[str] = None
     work_mode: Optional[WorkMode] = None
     salary_min: Optional[int] = None
     salary_max: Optional[int] = None
     currency: Optional[str] = None
-    source: Optional[str] = None
+    applied_via: Optional[str] = None
+    applied_ref: Optional[str] = None
     priority: Optional[int] = None
     cover_letter: Optional[str] = None
     contact_name: Optional[str] = None
@@ -245,13 +270,15 @@ class ApplicationRead(SQLModel):
     company: str
     title: str
     description: str
-    job_url: Optional[str]
+    found_via: Optional[str]
+    found_url: Optional[str]
     location: Optional[str]
     work_mode: Optional[WorkMode]
     salary_min: Optional[int]
     salary_max: Optional[int]
     currency: Optional[str]
-    source: str
+    applied_via: str
+    applied_ref: Optional[str]
     status: Status
     priority: int
     cover_letter: Optional[str]

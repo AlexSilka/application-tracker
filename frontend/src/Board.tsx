@@ -63,8 +63,8 @@ function Card({
       <div className="card-title">{app.title}</div>
       <div className="card-meta">
         <span className="chip">
-          <span className="cdot" style={{ background: SRC_COLOR[app.source] ?? 'var(--st-saved)' }} />
-          {app.source}
+          <span className="cdot" style={{ background: SRC_COLOR[app.applied_via] ?? 'var(--st-saved)' }} />
+          {app.applied_via}
         </span>
         {salary && <span className="chip salary">{salary}</span>}
       </div>
@@ -251,8 +251,8 @@ function DetailDrawer({
         <div className="drawer-facts">
           {salary && <span className="chip salary">{salary}</span>}
           <span className="chip">
-            <span className="cdot" style={{ background: SRC_COLOR[app.source] ?? 'var(--st-saved)' }} />
-            {app.source}
+            <span className="cdot" style={{ background: SRC_COLOR[app.applied_via] ?? 'var(--st-saved)' }} />
+            {app.applied_via}
           </span>
         </div>
       </div>
@@ -275,18 +275,38 @@ function DetailDrawer({
           ) : (
             <p className="jd empty">No description saved</p>
           )}
-          {app.job_url && (
+          {app.found_url && (
             <p style={{ marginTop: 8 }}>
-              <a href={app.job_url} target="_blank" rel="noreferrer"
+              <a href={app.found_url} target="_blank" rel="noreferrer"
                  style={{ color: 'var(--accent)', fontSize: 13, textDecoration: 'none' }}>
                 Open posting ↗
               </a>
+            </p>
+          )}
+          {app.found_via && (
+            <p style={{ marginTop: 4, fontSize: 12, color: 'var(--text-3)' }}>
+              Found via {app.found_via}
             </p>
           )}
         </div>
 
         <div>
           <div className="sect-label">Submitted</div>
+          <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 6 }}>
+            via <b>{app.applied_via}</b>
+            {app.applied_ref && (
+              <>
+                {' · '}
+                {app.applied_ref.includes('@') && !app.applied_ref.includes('/') ? (
+                  <a href={`mailto:${app.applied_ref}`}
+                     style={{ color: 'var(--accent)', textDecoration: 'none' }}>{app.applied_ref}</a>
+                ) : (
+                  <a href={app.applied_ref} target="_blank" rel="noreferrer"
+                     style={{ color: 'var(--accent)', textDecoration: 'none' }}>{app.applied_ref} ↗</a>
+                )}
+              </>
+            )}
+          </p>
           {app.resume_filename ? (
             <a className="doc-line doc-link" href={api.resumeUrl(app.id)} target="_blank" rel="noreferrer">
               <IconDoc />
@@ -348,7 +368,7 @@ function DetailDrawer({
         >
           Delete
         </button>
-        {app.job_url && <button onClick={() => window.open(app.job_url!, '_blank')}>Open ↗</button>}
+        {app.found_url && <button onClick={() => window.open(app.found_url!, '_blank')}>Open ↗</button>}
       </div>
     </aside>
   )

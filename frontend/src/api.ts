@@ -19,13 +19,15 @@ export interface Application {
   company: string
   title: string
   description: string
-  job_url?: string | null
+  found_via?: string | null
+  found_url?: string | null
   location?: string | null
   work_mode?: string | null
   salary_min?: number | null
   salary_max?: number | null
   currency?: string | null
-  source: string
+  applied_via: string
+  applied_ref?: string | null
   status: Status
   priority: number
   cover_letter?: string | null
@@ -51,13 +53,15 @@ export interface JobInput {
   company: string
   title: string
   description?: string
-  job_url?: string | null
+  found_via?: string | null
+  found_url?: string | null
   location?: string | null
   work_mode?: string | null
   salary_min?: number | null
   salary_max?: number | null
   currency?: string | null
-  source?: string
+  applied_via?: string
+  applied_ref?: string | null
   status?: Status
   cover_letter?: string | null
   contact_name?: string | null
@@ -79,7 +83,8 @@ export interface Meta {
   statuses: StatusMeta[]
   active_statuses: Status[]
   terminal_statuses: Status[]
-  sources: string[]
+  found_via: string[]
+  applied_via: string[]
   work_modes: string[]
 }
 
@@ -89,7 +94,7 @@ export interface Metrics {
   offers: number
   funnel: { applied: number; screening: number; interview: number; offer: number; accepted: number }
   conversions: { applied_to_interview: number; interview_to_offer: number; response_rate: number }
-  by_channel: { source: string; applied: number; interview: number; rate: number }[]
+  by_channel: { applied_via: string; applied: number; interview: number; rate: number }[]
   follow_ups: {
     id: number
     company: string

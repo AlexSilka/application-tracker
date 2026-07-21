@@ -16,13 +16,15 @@ function initial(state: FormState): JobInput {
       company: a.company,
       title: a.title,
       description: a.description ?? '',
-      job_url: a.job_url ?? '',
+      found_via: a.found_via ?? '',
+      found_url: a.found_url ?? '',
       location: a.location ?? '',
       work_mode: a.work_mode ?? '',
       salary_min: a.salary_min ?? null,
       salary_max: a.salary_max ?? null,
       currency: a.currency ?? '',
-      source: a.source,
+      applied_via: a.applied_via,
+      applied_ref: a.applied_ref ?? '',
       status: a.status,
       cover_letter: a.cover_letter ?? '',
       contact_name: a.contact_name ?? '',
@@ -37,13 +39,15 @@ function initial(state: FormState): JobInput {
     company: '',
     title: '',
     description: '',
-    job_url: '',
+    found_via: '',
+    found_url: '',
     location: '',
     work_mode: '',
     salary_min: null,
     salary_max: null,
     currency: '',
-    source: 'other',
+    applied_via: 'other',
+    applied_ref: '',
     status: state.status ?? 'saved',
     cover_letter: '',
     contact_name: '',
@@ -86,7 +90,9 @@ export function JobForm({ state, onClose }: { state: FormState; onClose: () => v
         title: f.title.trim(),
         description: f.description?.trim() || '',
         tags: tagsText.split(',').map((t) => t.trim()).filter(Boolean),
-        job_url: f.job_url || null,
+        found_via: f.found_via || null,
+        found_url: f.found_url || null,
+        applied_ref: f.applied_ref || null,
         location: f.location || null,
         work_mode: f.work_mode || null,
         currency: f.currency || null,
@@ -164,9 +170,9 @@ export function JobForm({ state, onClose }: { state: FormState; onClose: () => v
               </select>
             </label>
             <label className="field">
-              <span>Channel</span>
-              <select value={f.source} onChange={(e) => set('source', e.target.value)}>
-                {(meta?.sources ?? []).map((s) => (
+              <span>Applied via</span>
+              <select value={f.applied_via} onChange={(e) => set('applied_via', e.target.value)}>
+                {(meta?.applied_via ?? []).map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>
@@ -244,9 +250,23 @@ export function JobForm({ state, onClose }: { state: FormState; onClose: () => v
               </label>
             </div>
 
+            <label className="field">
+              <span>Found via</span>
+              <select value={f.found_via ?? ''} onChange={(e) => set('found_via', e.target.value)}>
+                <option value="">—</option>
+                {(meta?.found_via ?? []).map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              <span>Found at (URL)</span>
+              <input value={f.found_url ?? ''} onChange={(e) => set('found_url', e.target.value)} placeholder="https://…" />
+            </label>
             <label className="field span2">
-              <span>Job URL</span>
-              <input value={f.job_url ?? ''} onChange={(e) => set('job_url', e.target.value)} placeholder="https://…" />
+              <span>Applied to (URL or email)</span>
+              <input value={f.applied_ref ?? ''} onChange={(e) => set('applied_ref', e.target.value)}
+                     placeholder="https://careers…/apply  ·  jobs@company.com" />
             </label>
 
             <label className="field span2">

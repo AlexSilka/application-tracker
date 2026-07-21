@@ -36,7 +36,7 @@ export function TableView({ onOpen }: { onOpen: (id: number) => void }) {
                   {STATUS_LABEL[a.status]}
                 </span>
               </td>
-              <td>{a.source}</td>
+              <td>{a.applied_via}</td>
               <td className="t-num">{formatSalary(a) ?? '—'}</td>
               <td className="t-num">{a.applied_at ? `${daysSince(a.applied_at)}d` : '—'}</td>
               <td>{a.next_action ?? '—'}</td>
@@ -110,8 +110,8 @@ export function MetricsView() {
           <p className="hint">Which channels actually get a response</p>
           <div className="chan">
             {m.by_channel.map((c) => (
-              <div className="chan-row" key={c.source}>
-                <span>{c.source}</span>
+              <div className="chan-row" key={c.applied_via}>
+                <span>{c.applied_via}</span>
                 <div className="chan-track">
                   <div className="chan-fill"
                        style={{ width: `${c.rate}%`, background: c.rate > 0 ? 'var(--st-accepted)' : 'var(--accent)' }} />

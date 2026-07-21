@@ -11,7 +11,8 @@ from tracker import services
 from tracker.db import get_session, init_db
 from tracker.models import (
     ACTIVE_STATUSES,
-    SOURCES,
+    APPLIED_VIA,
+    FOUND_VIA,
     STATUS_LABEL,
     TERMINAL_STATUSES,
     ApplicationCreate,
@@ -55,7 +56,7 @@ def health() -> dict:
 
 @app.get("/api/meta")
 def meta() -> dict:
-    """Enums the frontend renders from — one source of truth for statuses/sources."""
+    """Enums the frontend renders from — one source of truth for statuses / channels."""
     return {
         "statuses": [
             {
@@ -68,7 +69,8 @@ def meta() -> dict:
         ],
         "active_statuses": [s.value for s in ACTIVE_STATUSES],
         "terminal_statuses": [s.value for s in TERMINAL_STATUSES],
-        "sources": SOURCES,
+        "found_via": FOUND_VIA,
+        "applied_via": APPLIED_VIA,
         "work_modes": [w.value for w in WorkMode],
     }
 
@@ -76,11 +78,11 @@ def meta() -> dict:
 @app.get("/api/applications", response_model=list[ApplicationRead])
 def list_applications(
     status: Optional[Status] = None,
-    source: Optional[str] = None,
+    applied_via: Optional[str] = None,
     q: Optional[str] = Query(default=None),
     session: Session = Depends(get_session),
 ):
-    return services.list_applications(session, status=status, source=source, q=q)
+    return services.list_applications(session, status=status, applied_via=applied_via, q=q)
 
 
 @app.post("/api/applications", response_model=ApplicationDetail, status_code=201)

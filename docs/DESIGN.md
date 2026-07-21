@@ -93,7 +93,10 @@ class Application:
     company: str                 # company name
     title: str                   # role
     description: str             # full JD, kept verbatim
-    job_url: str | None          # link to the posting
+
+    found_via: str | None        # WHERE we found it (first-touch): linkedin | hh |
+                                 # indeed | aggregator | telegram | referral | ...
+    found_url: str | None        # link to the posting where we found it
 
     location: str | None
     work_mode: Literal["onsite", "hybrid", "remote"] | None
@@ -101,8 +104,9 @@ class Application:
     salary_max: int | None
     currency: str | None         # USD / EUR / RUB ...
 
-    source: str                  # WHERE it went: linkedin | hh | indeed |
-                                 # company_site | referral | recruiter | email | other
+    applied_via: str             # HOW we applied (last-touch, funnel key): email |
+                                 # company_site | linkedin | referral | recruiter | ...
+    applied_ref: str | None      # exact apply target — a URL or an email
     status: Status               # enum from §3
 
     # WHAT was sent — the resume file itself lives in a 1:1 ResumeFile table
@@ -167,10 +171,11 @@ web app. That makes it the fast path for terminal entry and scripting.
 
 ```bash
 tracker add --company "Acme" --title "Senior Backend Engineer" \
-            --url https://... --source linkedin --description-file jd.md
+            --found-via linkedin --found-url https://... --description-file jd.md
 tracker list --status applied
 tracker show 12
-tracker apply 12 --source linkedin --resume-file resume-backend-v3.pdf --cover-letter-file cl.md
+tracker apply 12 --applied-via email --applied-ref jobs@acme.com \
+                 --resume-file resume-backend-v3.pdf --cover-letter-file cl.md
 tracker status 12 interview --note "passed the HR screen, system design next"
 tracker note 12 "recruiter — Maria, promised an answer by Friday"
 tracker metrics
@@ -289,7 +294,7 @@ Funnel + conversion cards + by-channel breakdown.
 
 | Method | Path | Purpose |
 |-------|------|-----------|
-| `GET` | `/applications?status=&source=&q=` | list with filters |
+| `GET` | `/applications?status=&applied_via=&q=` | list with filters |
 | `POST` | `/applications` | create |
 | `GET` | `/applications/{id}` | one job + timeline |
 | `PATCH` | `/applications/{id}` | partial field update |
@@ -306,8 +311,9 @@ Funnel + conversion cards + by-channel breakdown.
 - **Applied → Response** (response rate) = advanced past `applied` / applied.
 - **Response → Interview** = reached `interview`+ / those who responded.
 - **Interview → Offer** = offers / those who reached interview.
-- **By channel** — response share per linkedin / referral / company_site …
-  (which channel actually works).
+- **By channel** — response share per `applied_via` (email / linkedin / referral / …):
+  which apply method actually gets a reply. Discovery (`found_via`) is tracked
+  separately and is not part of the funnel.
 
 ---
 
@@ -342,7 +348,11 @@ Funnel + conversion cards + by-channel breakdown.
 3. **SQLite, single-user, no auth.** For the demo, the same code runs behind a
    public URL on a separate DB with fake data (`tracker seed`). Auth, multi-user,
    and Postgres are deliberately out of scope — this is a showcase, not a service.
-4. **Channels** (`source`): a mix of international (LinkedIn, Indeed) and regional
-   (hh.ru, Telegram) sources, matching a mixed RU + international job search.
+4. **Two-sided channel** — `found_via` (first-touch: where the job was spotted) is
+   kept separate from `applied_via` (last-touch: how it was submitted), each with its
+   own concrete locator (`found_url`, `applied_ref`). The funnel groups on
+   `applied_via`, since response rate is a property of how you applied, not where you
+   found it. Both span international (LinkedIn, Indeed) and regional (hh.ru, Telegram)
+   sources, matching a mixed RU + international job search.
 5. **UI copy in English** — the whole interface and all identifiers are English;
    the display label for `screening` is "In Contact".
