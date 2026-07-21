@@ -91,6 +91,7 @@ via fields in v1 (a separate `Contact` table if needed in v2).
 class Application:
     id: int                      # PK
     company: str                 # company name
+    company_url: str | None      # the employer's own site / careers page
     title: str                   # role
     description: str             # full JD, kept verbatim
 

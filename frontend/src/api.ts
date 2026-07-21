@@ -17,6 +17,7 @@ export interface AppEvent {
 export interface Application {
   id: number
   company: string
+  company_url?: string | null
   title: string
   description: string
   found_via?: string | null
@@ -51,6 +52,7 @@ export interface ApplicationDetail extends Application {
 // ApplicationUpdate in tracker/models.py. `company` and `title` are required on create.
 export interface JobInput {
   company: string
+  company_url?: string | null
   title: string
   description?: string
   found_via?: string | null

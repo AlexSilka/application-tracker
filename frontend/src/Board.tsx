@@ -240,6 +240,12 @@ function DetailDrawer({
           <div>
             <div className="drawer-title">{app.title}</div>
             <div className="drawer-co">{app.company}{sub ? ` · ${sub}` : ''}</div>
+            {app.company_url && (
+              <a href={app.company_url} target="_blank" rel="noreferrer"
+                 style={{ fontSize: 12, color: 'var(--accent)', textDecoration: 'none' }}>
+                {app.company_url.replace(/^https?:\/\//, '')} ↗
+              </a>
+            )}
           </div>
           <button className="icon-btn drawer-close" aria-label="Close" onClick={onClose}>
             <IconClose />

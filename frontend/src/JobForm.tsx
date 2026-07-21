@@ -14,6 +14,7 @@ function initial(state: FormState): JobInput {
     const a = state.app
     return {
       company: a.company,
+      company_url: a.company_url ?? '',
       title: a.title,
       description: a.description ?? '',
       found_via: a.found_via ?? '',
@@ -37,6 +38,7 @@ function initial(state: FormState): JobInput {
   }
   return {
     company: '',
+    company_url: '',
     title: '',
     description: '',
     found_via: '',
@@ -87,6 +89,7 @@ export function JobForm({ state, onClose }: { state: FormState; onClose: () => v
       const payload: JobInput = {
         ...f,
         company: f.company.trim(),
+        company_url: f.company_url || null,
         title: f.title.trim(),
         description: f.description?.trim() || '',
         tags: tagsText.split(',').map((t) => t.trim()).filter(Boolean),
@@ -250,6 +253,10 @@ export function JobForm({ state, onClose }: { state: FormState; onClose: () => v
               </label>
             </div>
 
+            <label className="field span2">
+              <span>Company site (URL)</span>
+              <input value={f.company_url ?? ''} onChange={(e) => set('company_url', e.target.value)} placeholder="https://…" />
+            </label>
             <label className="field">
               <span>Found via</span>
               <select value={f.found_via ?? ''} onChange={(e) => set('found_via', e.target.value)}>

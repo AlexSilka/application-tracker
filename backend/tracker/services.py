@@ -396,7 +396,7 @@ def seed(session: Session, force: bool = False) -> int:
              status=Status.offer, priority=5, salary_min=95000, salary_max=95000, currency="EUR",
              location="Paris", work_mode="hybrid", applied_days=21,
              next_action="reply to the offer", next_after=5, tags=["go", "python"]),
-        dict(company="Ozon", title="Backend Engineer",
+        dict(company="Ozon", title="Backend Engineer", company_url="https://job.ozon.ru",
              found_via="aggregator", found_url="https://gorod.work/vacancy/ozon-backend-2291",
              applied_via="email", applied_ref="jobs@ozon.ru", status=Status.rejected,
              priority=3, salary_min=300000, salary_max=420000, currency="RUB", location="Moscow",

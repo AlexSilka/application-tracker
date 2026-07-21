@@ -80,6 +80,7 @@ def seed(force: bool = typer.Option(False, "--force", help="wipe and recreate th
 def add(
     company: str = typer.Option(..., "--company", "-c"),
     title: str = typer.Option(..., "--title", "-t"),
+    company_url: Optional[str] = typer.Option(None, "--company-url", help="the employer's own site / careers page"),
     found_via: Optional[str] = typer.Option(None, "--found-via", help="where you found it: linkedin | hh.ru | aggregator | ..."),
     found_url: Optional[str] = typer.Option(None, "--found-url", help="link to the posting where you found it"),
     applied_via: str = typer.Option("other", "--applied-via", help="how you applied: email | company site | linkedin | ..."),
@@ -104,6 +105,7 @@ def add(
     payload = ApplicationCreate(
         company=company,
         title=title,
+        company_url=company_url,
         found_via=found_via,
         found_url=found_url,
         applied_via=applied_via,
@@ -154,6 +156,8 @@ def show(app_id: int = typer.Argument(..., metavar="ID")) -> None:
             raise typer.Exit(1)
         typer.secho(f"#{a.id}  {a.company} — {a.title}", bold=True)
         typer.echo(f"  status:    {STATUS_LABEL.get(a.status, a.status.value)}")
+        if a.company_url:
+            typer.echo(f"  site:      {a.company_url}")
         typer.echo(f"  applied:   {a.applied_via}" + (f" → {a.applied_ref}" if a.applied_ref else ""))
         if a.found_via or a.found_url:
             found = a.found_via or "—"

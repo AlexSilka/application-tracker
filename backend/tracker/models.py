@@ -111,6 +111,7 @@ class Application(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
 
     company: str
+    company_url: Optional[str] = None  # the employer's own site / careers page
     title: str
     description: str = ""  # full job description — we keep the JD verbatim
 
@@ -200,6 +201,7 @@ class ResumeFile(SQLModel, table=True):
 # --------------------------------------------------------------------------- #
 class ApplicationCreate(SQLModel):
     company: str
+    company_url: Optional[str] = None
     title: str
     description: str = ""
     found_via: Optional[str] = None
@@ -224,6 +226,7 @@ class ApplicationCreate(SQLModel):
 
 class ApplicationUpdate(SQLModel):
     company: Optional[str] = None
+    company_url: Optional[str] = None
     title: Optional[str] = None
     description: Optional[str] = None
     found_via: Optional[str] = None
@@ -268,6 +271,7 @@ class EventRead(SQLModel):
 class ApplicationRead(SQLModel):
     id: int
     company: str
+    company_url: Optional[str]
     title: str
     description: str
     found_via: Optional[str]
