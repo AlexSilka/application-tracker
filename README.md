@@ -18,6 +18,22 @@ docs/      DESIGN.md, mockup.html
 
 ## Running
 
+```bash
+./tools/app_start.sh     # start backend (:8787) + frontend (:5173), detached
+./tools/app_stop.sh      # stop both
+```
+
+`app_start.sh` launches both servers in the background — they keep running
+after you close the terminal — waits until each one answers, then prints the
+URL. On a fresh checkout it also creates the venv, installs dependencies and
+seeds sample data. Re-running it restarts cleanly. Logs stream to
+`logs/backend.log` and `logs/frontend.log`.
+
+Open **http://localhost:5173**.
+
+<details>
+<summary>Or run the two servers by hand (two terminals)</summary>
+
 ### Backend (port 8787)
 ```bash
 cd backend
@@ -33,8 +49,7 @@ cd frontend
 npm install
 npm run dev                     # http://localhost:5173  (proxies /api → 8787)
 ```
-
-Open **http://localhost:5173**.
+</details>
 
 ## `tracker` CLI
 

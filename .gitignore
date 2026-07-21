@@ -15,6 +15,9 @@ dist/
 *.sqlite
 *.sqlite3
 
+# Runtime logs (tools/app_start.sh)
+logs/
+
 # Environment / secrets
 .env
 .env.*
