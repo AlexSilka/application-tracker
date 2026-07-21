@@ -42,8 +42,3 @@ export const IconLines = ({ size = 13 }: P) => (
     <path d="M4 5h16M4 12h16M4 19h10" />
   </svg>
 )
-export const IconCode = ({ size = 14 }: P) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="m8 6-6 6 6 6M16 6l6 6-6 6" />
-  </svg>
-)

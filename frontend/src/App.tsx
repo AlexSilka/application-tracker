@@ -4,7 +4,7 @@ import { api, type ApplicationDetail, type Status } from './api'
 import { BoardView } from './Board'
 import { TableView, MetricsView } from './Views'
 import { JobForm, type FormState } from './JobForm'
-import { IconClock, IconCode, IconPlus, IconSearch, IconSun } from './icons'
+import { IconClock, IconPlus, IconSearch, IconSun } from './icons'
 
 type View = 'board' | 'table' | 'metrics'
 
@@ -125,17 +125,6 @@ function TopBar({
   )
 }
 
-function Footer() {
-  return (
-    <div className="footer-note">
-      <IconCode />
-      Updated from the web and via the <code>tracker</code> CLI — Claude moves statuses and writes notes itself
-      <span className="spacer" />
-      <span className="mono" style={{ fontSize: 11 }}>SQLite · FastAPI · React + TS</span>
-    </div>
-  )
-}
-
 export default function App() {
   const [view, setView] = useState<View>('board')
   const [selected, setSelected] = useState<number | null>(null)
@@ -174,7 +163,6 @@ export default function App() {
         {view === 'table' && <TableView onOpen={openJob} />}
         {view === 'metrics' && <MetricsView />}
       </div>
-      <Footer />
       {form && <JobForm state={form} onClose={() => setForm(null)} />}
     </div>
   )
