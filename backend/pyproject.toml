@@ -8,6 +8,7 @@ dependencies = [
     "uvicorn>=0.29",
     "sqlmodel>=0.0.16",
     "typer>=0.12",
+    "python-multipart>=0.0.9",  # UploadFile / multipart form parsing for resume upload
 ]
 
 [project.scripts]

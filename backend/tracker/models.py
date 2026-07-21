@@ -111,8 +111,7 @@ class Application(SQLModel, table=True):
     status: Status = Field(default=Status.saved, index=True)
     priority: int = 3  # 1..5, how much we want it
 
-    resume_version: Optional[str] = None  # WHAT we sent — resume label/version
-    cover_letter: Optional[str] = None    # WHAT we wrote — cover letter / message text
+    cover_letter: Optional[str] = None  # WHAT we wrote — cover letter / message text
 
     contact_name: Optional[str] = None
     contact_email: Optional[str] = None
@@ -135,6 +134,17 @@ class Application(SQLModel, table=True):
         },
     )
 
+    # WHAT we sent — the actual resume file, one per application (upload replaces).
+    resume: Optional["ResumeFile"] = Relationship(
+        back_populates="application",
+        sa_relationship_kwargs={"uselist": False, "cascade": "all, delete-orphan"},
+    )
+
+    @property
+    def resume_filename(self) -> Optional[str]:
+        """Name of the attached resume file, if any — surfaced on ApplicationDetail."""
+        return self.resume.filename if self.resume else None
+
 
 class Event(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -145,6 +155,23 @@ class Event(SQLModel, table=True):
     occurred_at: datetime = Field(default_factory=utcnow)
 
     application: Optional[Application] = Relationship(back_populates="events")
+
+
+class ResumeFile(SQLModel, table=True):
+    """The resume file sent for a given application — the ground truth of what a
+    recruiter actually received. Stored as a BLOB in the same SQLite file so the
+    whole tracker stays a single, copy-to-back-up artifact. The application id is
+    the primary key, enforcing one resume per job (a new upload replaces it).
+    Kept in its own table so listing the board never drags the file bytes along.
+    """
+
+    application_id: int = Field(foreign_key="application.id", primary_key=True)
+    filename: str
+    content_type: str = "application/octet-stream"
+    content: bytes
+    uploaded_at: datetime = Field(default_factory=utcnow)
+
+    application: Optional[Application] = Relationship(back_populates="resume")
 
 
 # --------------------------------------------------------------------------- #
@@ -163,7 +190,6 @@ class ApplicationCreate(SQLModel):
     source: str = "other"
     status: Status = Status.saved
     priority: int = 3
-    resume_version: Optional[str] = None
     cover_letter: Optional[str] = None
     contact_name: Optional[str] = None
     contact_email: Optional[str] = None
@@ -185,7 +211,6 @@ class ApplicationUpdate(SQLModel):
     currency: Optional[str] = None
     source: Optional[str] = None
     priority: Optional[int] = None
-    resume_version: Optional[str] = None
     cover_letter: Optional[str] = None
     contact_name: Optional[str] = None
     contact_email: Optional[str] = None
@@ -229,7 +254,6 @@ class ApplicationRead(SQLModel):
     source: str
     status: Status
     priority: int
-    resume_version: Optional[str]
     cover_letter: Optional[str]
     contact_name: Optional[str]
     contact_email: Optional[str]
@@ -243,4 +267,5 @@ class ApplicationRead(SQLModel):
 
 
 class ApplicationDetail(ApplicationRead):
+    resume_filename: Optional[str] = None  # attached resume file, if any
     events: list[EventRead] = Field(default_factory=list)

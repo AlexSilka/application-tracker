@@ -28,7 +28,6 @@ export interface Application {
   source: string
   status: Status
   priority: number
-  resume_version?: string | null
   cover_letter?: string | null
   contact_name?: string | null
   contact_email?: string | null
@@ -42,6 +41,7 @@ export interface Application {
 }
 
 export interface ApplicationDetail extends Application {
+  resume_filename?: string | null
   events: AppEvent[]
 }
 
@@ -59,7 +59,6 @@ export interface JobInput {
   currency?: string | null
   source?: string
   status?: Status
-  resume_version?: string | null
   cover_letter?: string | null
   contact_name?: string | null
   contact_email?: string | null
@@ -138,4 +137,16 @@ export const api = {
     }),
   remove: (id: number) =>
     request<void>(`/api/applications/${id}`, { method: 'DELETE' }),
+  // Multipart upload: let the browser set the Content-Type boundary itself, so
+  // this bypasses the JSON `request` helper.
+  uploadResume: async (id: number, file: File) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await fetch(`/api/applications/${id}/resume`, { method: 'POST', body: fd })
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+    return (await res.json()) as ApplicationDetail
+  },
+  deleteResume: (id: number) =>
+    request<void>(`/api/applications/${id}/resume`, { method: 'DELETE' }),
+  resumeUrl: (id: number) => `/api/applications/${id}/resume`,
 }

@@ -42,9 +42,9 @@ layer**, so the business logic never forks between them.
   in rows rather than columns.
 - **Metrics** — the funnel, stage-to-stage conversion rates, and a per-channel
   breakdown of which sources actually land interviews.
-- **Job detail** — full job description, resume version and cover-letter text,
-  contact, next action, and the complete event timeline; create / edit / delete
-  inline.
+- **Job detail** — full job description, the attached resume file and
+  cover-letter text, contact, next action, and the complete event timeline;
+  create / edit / delete inline.
 
 Open [docs/mockup.html](docs/mockup.html) for a static preview of the design.
 
@@ -94,7 +94,8 @@ tracker add -c "Acme" -t "Senior Backend Engineer" \
             --url https://... --source linkedin --description-file jd.md
 tracker list [--status applied]
 tracker show 12
-tracker apply 12 --source linkedin --resume backend-v3 --cover-letter-file cl.md
+tracker apply 12 --source linkedin --resume-file resume-backend-v3.pdf --cover-letter-file cl.md
+tracker resume 12 resume-backend-v3.pdf      # attach / replace the resume file (or --remove)
 tracker status 12 interview --note "passed the HR screen, system design next"
 tracker note 12 "recruiter promised an answer by Friday"
 tracker set 12 --next-action "write a follow-up" --next-action-date 2026-07-25

@@ -287,14 +287,14 @@ function DetailDrawer({
 
         <div>
           <div className="sect-label">Submitted</div>
-          {app.resume_version ? (
-            <div className="doc-line">
+          {app.resume_filename ? (
+            <a className="doc-line doc-link" href={api.resumeUrl(app.id)} target="_blank" rel="noreferrer">
               <IconDoc />
-              <span className="fname">{app.resume_version}</span>
-              <span className="tag">resume</span>
-            </div>
+              <span className="fname">{app.resume_filename}</span>
+              <span className="tag">open ↗</span>
+            </a>
           ) : (
-            <p className="jd empty">No resume specified</p>
+            <p className="jd empty">No resume attached</p>
           )}
           {app.cover_letter && <p className="cover">“{app.cover_letter}”</p>}
         </div>

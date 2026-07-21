@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, File, HTTPException, Query, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session
 
@@ -26,6 +26,10 @@ from tracker.models import (
 )
 
 app = FastAPI(title="Application Tracker", version="0.1.0")
+
+# A resume is a document, not a media file — anything larger is a mistake we'd
+# rather reject than silently bloat the SQLite file with.
+MAX_RESUME_BYTES = 10 * 1024 * 1024
 
 # The Vite dev server runs on 5173; allow it (and localhost variants) to call the API.
 app.add_middleware(
@@ -129,6 +133,53 @@ def add_event(app_id: int, payload: EventCreate, session: Session = Depends(get_
 def delete_application(app_id: int, session: Session = Depends(get_session)):
     try:
         services.delete_application(session, app_id)
+    except services.NotFound:
+        raise HTTPException(status_code=404, detail="application not found")
+
+
+@app.post("/api/applications/{app_id}/resume", response_model=ApplicationDetail)
+def upload_resume(
+    app_id: int,
+    file: UploadFile = File(...),
+    session: Session = Depends(get_session),
+):
+    """Attach (or replace) the resume file sent for this application."""
+    content = file.file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="empty file")
+    if len(content) > MAX_RESUME_BYTES:
+        raise HTTPException(status_code=413, detail="file too large (max 10 MB)")
+    try:
+        services.set_resume(
+            session,
+            app_id,
+            filename=file.filename or "resume",
+            content_type=file.content_type or "application/octet-stream",
+            content=content,
+        )
+        return services.get_application(session, app_id)
+    except services.NotFound:
+        raise HTTPException(status_code=404, detail="application not found")
+
+
+@app.get("/api/applications/{app_id}/resume")
+def download_resume(app_id: int, session: Session = Depends(get_session)):
+    rf = services.get_resume(session, app_id)
+    if rf is None:
+        raise HTTPException(status_code=404, detail="no resume attached")
+    # `inline` lets the browser preview PDFs in a new tab and still offer Save;
+    # non-previewable types (docx) fall back to a download named after the file.
+    return Response(
+        content=rf.content,
+        media_type=rf.content_type,
+        headers={"Content-Disposition": f'inline; filename="{rf.filename}"'},
+    )
+
+
+@app.delete("/api/applications/{app_id}/resume", status_code=204)
+def delete_resume(app_id: int, session: Session = Depends(get_session)):
+    try:
+        services.delete_resume(session, app_id)
     except services.NotFound:
         raise HTTPException(status_code=404, detail="application not found")
 

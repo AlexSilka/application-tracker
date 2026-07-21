@@ -5,6 +5,7 @@ Writes straight to the same SQLite file as the web API through the shared
 """
 from __future__ import annotations
 
+import mimetypes
 from datetime import date
 from pathlib import Path
 from typing import Optional
@@ -50,6 +51,15 @@ def _line(a) -> str:
     return f"  #{a.id:<3} [{label:<11}] {a.company} — {a.title}  ({a.source})"
 
 
+def _attach_resume(session, app_id: int, path: Path):
+    """Read a resume file from disk and store it against the application."""
+    data = path.read_bytes()
+    content_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+    return services.set_resume(
+        session, app_id, filename=path.name, content_type=content_type, content=data
+    )
+
+
 # --------------------------------------------------------------------------- #
 @app.command()
 def init() -> None:
@@ -81,7 +91,6 @@ def add(
     work_mode: Optional[str] = typer.Option(None, "--work-mode", help="onsite | hybrid | remote"),
     description: Optional[str] = typer.Option(None, "--description"),
     description_file: Optional[Path] = typer.Option(None, "--description-file"),
-    resume: Optional[str] = typer.Option(None, "--resume", help="resume version sent"),
     tags: Optional[str] = typer.Option(None, "--tags", help="comma-separated"),
     next_action: Optional[str] = typer.Option(None, "--next-action"),
     next_action_date: Optional[str] = typer.Option(None, "--next-action-date", help="YYYY-MM-DD"),
@@ -103,7 +112,6 @@ def add(
         location=location,
         work_mode=WorkMode(work_mode) if work_mode else None,
         description=desc,
-        resume_version=resume,
         tags=[t.strip() for t in tags.split(",")] if tags else [],
         next_action=next_action,
         next_action_date=date.fromisoformat(next_action_date) if next_action_date else None,
@@ -147,8 +155,8 @@ def show(app_id: int = typer.Argument(..., metavar="ID")) -> None:
         typer.echo(f"  salary:    {_fmt_salary(a)}")
         if a.location:
             typer.echo(f"  location:  {a.location} ({a.work_mode.value if a.work_mode else '—'})")
-        if a.resume_version:
-            typer.echo(f"  resume:    {a.resume_version}")
+        if a.resume_filename:
+            typer.echo(f"  resume:    {a.resume_filename}")
         if a.next_action:
             when = f" — {a.next_action_date}" if a.next_action_date else ""
             typer.echo(f"  next:      {a.next_action}{when}")
@@ -166,7 +174,7 @@ def show(app_id: int = typer.Argument(..., metavar="ID")) -> None:
 def apply(
     app_id: int = typer.Argument(..., metavar="ID"),
     source: Optional[str] = typer.Option(None, "--source"),
-    resume: Optional[str] = typer.Option(None, "--resume"),
+    resume_file: Optional[Path] = typer.Option(None, "--resume-file", help="resume file sent"),
     cover_letter: Optional[str] = typer.Option(None, "--cover-letter"),
     cover_letter_file: Optional[Path] = typer.Option(None, "--cover-letter-file"),
 ) -> None:
@@ -174,17 +182,17 @@ def apply(
     cover = cover_letter
     if cover_letter_file:
         cover = cover_letter_file.read_text(encoding="utf-8")
-    patch = ApplicationUpdate(
-        source=source, resume_version=resume, cover_letter=cover
-    )
+    patch = ApplicationUpdate(source=source, cover_letter=cover)
     with open_session() as s:
         try:
             services.update_application(s, app_id, patch)
+            if resume_file is not None:
+                _attach_resume(s, app_id, resume_file)
             a = services.set_status(s, app_id, Status.applied)
         except services.NotFound:
             typer.secho(f"#{app_id} not found", fg="red")
             raise typer.Exit(1)
-    typer.echo(f"#{a.id} → Applied ({a.source}, resume {a.resume_version or '—'})")
+    typer.echo(f"#{a.id} → Applied ({a.source})")
 
 
 @app.command()
@@ -225,7 +233,6 @@ def set_fields(
     next_action: Optional[str] = typer.Option(None, "--next-action"),
     next_action_date: Optional[str] = typer.Option(None, "--next-action-date", help="YYYY-MM-DD"),
     priority: Optional[int] = typer.Option(None, "--priority", "-p", min=1, max=5),
-    resume: Optional[str] = typer.Option(None, "--resume"),
     contact_name: Optional[str] = typer.Option(None, "--contact-name"),
     contact_email: Optional[str] = typer.Option(None, "--contact-email"),
 ) -> None:
@@ -234,7 +241,6 @@ def set_fields(
         next_action=next_action,
         next_action_date=date.fromisoformat(next_action_date) if next_action_date else None,
         priority=priority,
-        resume_version=resume,
         contact_name=contact_name,
         contact_email=contact_email,
     )
@@ -245,6 +251,28 @@ def set_fields(
             typer.secho(f"#{app_id} not found", fg="red")
             raise typer.Exit(1)
     typer.echo(f"#{app_id}: updated")
+
+
+@app.command()
+def resume(
+    app_id: int = typer.Argument(..., metavar="ID"),
+    path: Optional[Path] = typer.Argument(None, metavar="FILE", help="resume file to attach"),
+    remove: bool = typer.Option(False, "--remove", help="detach the current resume"),
+) -> None:
+    """Attach (or remove) the resume file sent for a job."""
+    with open_session() as s:
+        try:
+            if remove:
+                services.delete_resume(s, app_id)
+                typer.echo(f"#{app_id}: resume removed")
+                return
+            if path is None:
+                raise typer.BadParameter("give a FILE path to attach, or --remove")
+            rf = _attach_resume(s, app_id, path)
+        except services.NotFound:
+            typer.secho(f"#{app_id} not found", fg="red")
+            raise typer.Exit(1)
+    typer.echo(f"#{app_id}: attached {rf.filename} ({len(rf.content)} bytes)")
 
 
 @app.command()

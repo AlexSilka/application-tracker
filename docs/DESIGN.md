@@ -16,7 +16,7 @@ diverges between them.
 - **Statuses**: `saved → applied → screening → interview → offer → accepted`,
   plus terminal `rejected / withdrawn / ghosted`.
 - **Stored per job**: the JD itself (title + full description), **where** the
-  application went (channel), **what** was sent (resume version + cover letter /
+  application went (channel), **what** was sent (resume file + cover letter /
   message text), an event timeline, recruiter contact, next action.
 - **Two entry points**: the REST API behind the web UI, and the `tracker` CLI,
   which works without a running server — writing straight to SQLite through the
@@ -31,7 +31,7 @@ Looked at Teal, Huntr, Simplify, ApplyArc, JobShinobi — the gist:
 | Tool | Core idea | What this project borrows |
 |-----------|--------------|--------------|
 | **Huntr** | Kanban board `wishlist → applied → interview → offer → rejected`, CRM layer | board as the main view, drag-and-drop status changes |
-| **Teal** | Table + funnel overview on top, resume-to-JD keyword matching | table view, tying a resume version to an application |
+| **Teal** | Table + funnel overview on top, resume-to-JD keyword matching | table view, tying a resume file to an application |
 | **Simplify** | Chrome extension auto-fills applications on 100+ portals | (not in v1) the idea of importing a job by URL |
 | **ApplyArc / JobShinobi** | Stages `Saved, Applied, Phone Screen, Interview, Offer, Rejected` + funnel metrics and follow-up cadence | conversion metrics, follow-up reminders |
 
@@ -105,7 +105,8 @@ class Application:
                                  # company_site | referral | recruiter | email | other
     status: Status               # enum from §3
 
-    resume_version: str | None   # WHAT was sent: which resume (label/file)
+    # WHAT was sent — the resume file itself lives in a 1:1 ResumeFile table
+    # (a BLOB in the same SQLite file), replaced on each new upload.
     cover_letter: str | None     # WHAT was written: cover letter / message text
 
     contact_name: str | None     # recruiter / hiring manager
@@ -169,7 +170,7 @@ tracker add --company "Acme" --title "Senior Backend Engineer" \
             --url https://... --source linkedin --description-file jd.md
 tracker list --status applied
 tracker show 12
-tracker apply 12 --source linkedin --resume backend-v3 --cover-letter-file cl.md
+tracker apply 12 --source linkedin --resume-file resume-backend-v3.pdf --cover-letter-file cl.md
 tracker status 12 interview --note "passed the HR screen, system design next"
 tracker note 12 "recruiter — Maria, promised an answer by Friday"
 tracker metrics
@@ -275,7 +276,7 @@ A dense list with all fields, sort/filter by status, channel, date. For people w
 think in lists, not boards (like Teal).
 
 ### 7.3 Job detail
-A slide-out panel / page: full JD, resume version + cover-letter text, event
+A slide-out panel / page: full JD, the attached resume file + cover-letter text, event
 timeline, contact, next action. Plus the buttons "add note", "change status", "log
 interview".
 

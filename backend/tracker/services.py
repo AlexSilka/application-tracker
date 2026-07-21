@@ -21,6 +21,7 @@ from tracker.models import (
     ApplicationUpdate,
     Event,
     EventKind,
+    ResumeFile,
     Status,
     utcnow,
 )
@@ -62,7 +63,7 @@ def get_application(session: Session, app_id: int) -> Application:
     app = session.exec(
         select(Application)
         .where(Application.id == app_id)
-        .options(selectinload(Application.events))
+        .options(selectinload(Application.events), selectinload(Application.resume))
     ).first()
     if app is None:
         raise NotFound(f"application {app_id} not found")
@@ -193,6 +194,50 @@ def delete_application(session: Session, app_id: int) -> None:
 
 
 # --------------------------------------------------------------------------- #
+# Resume file (the actual document sent — stored as a BLOB, one per application)
+# --------------------------------------------------------------------------- #
+def set_resume(
+    session: Session, app_id: int, filename: str, content_type: str, content: bytes
+) -> ResumeFile:
+    """Attach or replace the resume file for an application."""
+    app = _require(session, app_id)
+    now = utcnow()
+    rf = session.get(ResumeFile, app_id)
+    if rf is None:
+        rf = ResumeFile(
+            application_id=app_id,
+            filename=filename,
+            content_type=content_type,
+            content=content,
+            uploaded_at=now,
+        )
+    else:
+        rf.filename = filename
+        rf.content_type = content_type
+        rf.content = content
+        rf.uploaded_at = now
+    session.add(rf)
+    app.updated_at = now  # attaching a file counts as activity — float the card up
+    session.add(app)
+    session.commit()
+    session.refresh(rf)
+    return rf
+
+
+def get_resume(session: Session, app_id: int) -> Optional[ResumeFile]:
+    """Return the stored resume file for download, or None if none is attached."""
+    return session.get(ResumeFile, app_id)
+
+
+def delete_resume(session: Session, app_id: int) -> None:
+    _require(session, app_id)
+    rf = session.get(ResumeFile, app_id)
+    if rf is not None:
+        session.delete(rf)
+        session.commit()
+
+
+# --------------------------------------------------------------------------- #
 # Metrics
 # --------------------------------------------------------------------------- #
 def _reached_rank(app: Application) -> int:
@@ -313,20 +358,20 @@ def seed(session: Session, force: bool = False) -> int:
              location="Amsterdam", work_mode="hybrid", tags=["go", "kubernetes"]),
         dict(company="Nebius", title="Backend Engineer", source="linkedin", status=Status.applied,
              priority=4, salary_min=75000, salary_max=95000, currency="EUR", location="Belgrade",
-             work_mode="hybrid", resume_version="backend-v3", applied_days=3,
+             work_mode="hybrid", applied_days=3,
              next_action="first follow-up", next_after=4, tags=["python", "grpc"]),
         dict(company="Wildberries", title="Python Developer", source="company site",
              status=Status.applied, priority=3, salary_min=350000, salary_max=480000, currency="RUB",
-             location="Moscow", work_mode="onsite", resume_version="backend-v3", applied_days=9,
+             location="Moscow", work_mode="onsite", applied_days=9,
              next_action="follow-up — no reply", next_after=-2, tags=["python", "django"]),
         dict(company="JetBrains", title="Software Developer, YouTrack", source="referral",
              status=Status.screening, priority=5, salary_min=80000, salary_max=110000, currency="EUR",
-             location="Prague", work_mode="hybrid", resume_version="backend-v3", applied_days=5,
+             location="Prague", work_mode="hybrid", applied_days=5,
              next_action="recruiter call", next_after=1,
              contact_name="Anna K.", contact_email="anna@jetbrains.com", tags=["kotlin", "python"]),
         dict(company="Yandex", title="Senior Software Engineer", source="referral",
              status=Status.interview, priority=5, salary_min=380000, salary_max=520000, currency="RUB",
-             location="Moscow", work_mode="hybrid", resume_version="backend-v3", applied_days=12,
+             location="Moscow", work_mode="hybrid", applied_days=12,
              next_action="tech interview (coding)", next_after=2,
              contact_name="Maria Ivanova", contact_email="m.ivanova@yandex-team.ru",
              contact_url="https://linkedin.com/in/mivanova",
@@ -340,19 +385,19 @@ def seed(session: Session, force: bool = False) -> int:
              job_url="https://yandex.ru/jobs/vacancies/12345", tags=["python", "go", "clickhouse"]),
         dict(company="Toloka", title="ML Platform Engineer", source="linkedin",
              status=Status.interview, priority=4, salary_min=70000, salary_max=90000, currency="EUR",
-             location="Remote", work_mode="remote", resume_version="ml-v1", applied_days=8,
+             location="Remote", work_mode="remote", applied_days=8,
              next_action="stage 2 of 3", next_after=3, tags=["python", "ml", "airflow"]),
         dict(company="Datadog", title="Software Engineer, Backend", source="linkedin",
              status=Status.offer, priority=5, salary_min=95000, salary_max=95000, currency="EUR",
-             location="Paris", work_mode="hybrid", resume_version="backend-v3", applied_days=21,
+             location="Paris", work_mode="hybrid", applied_days=21,
              next_action="reply to the offer", next_after=5, tags=["go", "python"]),
         dict(company="Ozon", title="Backend Engineer", source="hh.ru", status=Status.rejected,
              priority=3, salary_min=300000, salary_max=420000, currency="RUB", location="Moscow",
-             work_mode="hybrid", resume_version="backend-v2", applied_days=18, reached=Status.screening,
+             work_mode="hybrid", applied_days=18, reached=Status.screening,
              tags=["go"]),
         dict(company="Notion", title="Software Engineer", source="linkedin", status=Status.ghosted,
              priority=4, salary_min=140000, salary_max=170000, currency="USD", location="Remote (US)",
-             work_mode="remote", resume_version="backend-v2", applied_days=27, tags=["typescript"]),
+             work_mode="remote", applied_days=27, tags=["typescript"]),
     ]
 
     count = 0
@@ -400,8 +445,7 @@ def _seed_timeline(session: Session, app: Application, status: Status, applied_d
     target_rank = STATUS_RANK.get(target, STATUS_RANK[Status.applied])
 
     session.add(Event(application_id=app.id, kind=EventKind.status_change,
-                      body=f"Applied · {app.source}"
-                           + (f" · resume {app.resume_version}" if app.resume_version else ""),
+                      body=f"Applied · {app.source}",
                       meta={"from": Status.saved.value, "to": Status.applied.value},
                       occurred_at=at(applied_days)))
 

@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, type ApplicationDetail, type JobInput, type Status } from './api'
-import { IconClose } from './icons'
+import { IconClose, IconDoc } from './icons'
 
 export type FormState =
   | { mode: 'create'; status?: Status }
@@ -24,7 +24,6 @@ function initial(state: FormState): JobInput {
       currency: a.currency ?? '',
       source: a.source,
       status: a.status,
-      resume_version: a.resume_version ?? '',
       cover_letter: a.cover_letter ?? '',
       contact_name: a.contact_name ?? '',
       contact_email: a.contact_email ?? '',
@@ -46,7 +45,6 @@ function initial(state: FormState): JobInput {
     currency: '',
     source: 'other',
     status: state.status ?? 'saved',
-    resume_version: '',
     cover_letter: '',
     contact_name: '',
     contact_email: '',
@@ -64,8 +62,19 @@ export function JobForm({ state, onClose }: { state: FormState; onClose: () => v
   const [f, setF] = useState<JobInput>(init)
   const [tagsText, setTagsText] = useState((init.tags ?? []).join(', '))
 
+  // Resume is a file, uploaded to its own endpoint after the job is saved.
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [resumeFile, setResumeFile] = useState<File | null>(null)
+  const [removeResume, setRemoveResume] = useState(false)
+  const savedName = state.mode === 'edit' ? state.app.resume_filename ?? null : null
+
   function set<K extends keyof JobInput>(k: K, v: JobInput[K]) {
     setF((p) => ({ ...p, [k]: v }))
+  }
+
+  function clearPick() {
+    setResumeFile(null)
+    if (fileRef.current) fileRef.current.value = ''
   }
 
   const mutation = useMutation({
@@ -81,7 +90,6 @@ export function JobForm({ state, onClose }: { state: FormState; onClose: () => v
         location: f.location || null,
         work_mode: f.work_mode || null,
         currency: f.currency || null,
-        resume_version: f.resume_version || null,
         cover_letter: f.cover_letter || null,
         contact_name: f.contact_name || null,
         contact_email: f.contact_email || null,
@@ -89,7 +97,11 @@ export function JobForm({ state, onClose }: { state: FormState; onClose: () => v
         next_action: f.next_action || null,
         next_action_date: f.next_action_date || null,
       }
-      if (state.mode === 'create') return api.create(payload)
+      if (state.mode === 'create') {
+        const created = await api.create(payload)
+        if (resumeFile) await api.uploadResume(created.id, resumeFile)
+        return created
+      }
 
       // Edit: a status change must go through the status endpoint so it logs a
       // timeline event and sets applied_at (a plain PATCH would do neither).
@@ -99,7 +111,12 @@ export function JobForm({ state, onClose }: { state: FormState; onClose: () => v
       }
       const patch: Partial<JobInput> = { ...payload }
       delete patch.status
-      return api.update(id, patch)
+      const updated = await api.update(id, patch)
+      // A newly picked file replaces whatever was there; otherwise honour an
+      // explicit removal. No file + no removal = leave the resume untouched.
+      if (resumeFile) await api.uploadResume(id, resumeFile)
+      else if (removeResume) await api.deleteResume(id)
+      return updated
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['apps'] })
@@ -194,10 +211,35 @@ export function JobForm({ state, onClose }: { state: FormState; onClose: () => v
                 ))}
               </select>
             </label>
-            <label className="field">
-              <span>Resume version</span>
-              <input value={f.resume_version ?? ''} onChange={(e) => set('resume_version', e.target.value)} placeholder="backend-v3" />
-            </label>
+            <div className="field span2">
+              <span>Resume (PDF / DOC — the file you sent)</span>
+              {resumeFile ? (
+                <div className="doc-line">
+                  <IconDoc />
+                  <span className="fname">{resumeFile.name}</span>
+                  <span className="tag">new</span>
+                  <button type="button" className="file-x" onClick={clearPick}>Clear</button>
+                </div>
+              ) : savedName && !removeResume ? (
+                <div className="doc-line">
+                  <IconDoc />
+                  <span className="fname">{savedName}</span>
+                  <button type="button" className="file-x" onClick={() => setRemoveResume(true)}>Remove</button>
+                </div>
+              ) : removeResume ? (
+                <div className="doc-line muted">
+                  <span className="fname">Will be removed on save</span>
+                  <button type="button" className="file-x" onClick={() => setRemoveResume(false)}>Undo</button>
+                </div>
+              ) : null}
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".pdf,.doc,.docx,application/pdf"
+                onChange={(e) => { setResumeFile(e.target.files?.[0] ?? null); setRemoveResume(false) }}
+                style={{ marginTop: 6 }}
+              />
+            </div>
 
             <label className="field span2">
               <span>Job URL</span>
