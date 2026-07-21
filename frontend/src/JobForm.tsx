@@ -232,13 +232,16 @@ export function JobForm({ state, onClose }: { state: FormState; onClose: () => v
                   <button type="button" className="file-x" onClick={() => setRemoveResume(false)}>Undo</button>
                 </div>
               ) : null}
-              <input
-                ref={fileRef}
-                type="file"
-                accept=".pdf,.doc,.docx,application/pdf"
-                onChange={(e) => { setResumeFile(e.target.files?.[0] ?? null); setRemoveResume(false) }}
-                style={{ marginTop: 6 }}
-              />
+              <label className="file-btn">
+                <IconDoc />
+                {resumeFile || (savedName && !removeResume) ? 'Replace file…' : 'Choose file…'}
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx,application/pdf"
+                  onChange={(e) => { setResumeFile(e.target.files?.[0] ?? null); setRemoveResume(false) }}
+                />
+              </label>
             </div>
 
             <label className="field span2">

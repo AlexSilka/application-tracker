@@ -183,6 +183,11 @@ a.doc-line .tag { color: var(--accent); }
 .doc-line .tag + .file-x { margin-left: 8px; }
 .doc-line.muted { border-style: dashed; }
 .doc-line.muted .fname { font-family: inherit; color: var(--text-3); }
+/* Custom file trigger: the native <input type=file> button can't be themed, so
+   it's hidden and this styled label opens the dialog instead. */
+.file-btn { display: inline-flex; align-items: center; gap: 8px; width: fit-content; margin-top: 2px; padding: 8px 14px; font-size: 13px; font-weight: 600; color: var(--text); background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: border-color .12s, background .12s; }
+.file-btn:hover { border-color: var(--accent); background: var(--surface-3); }
+.file-btn input { display: none; }
 .cover { font-size: 12.5px; line-height: 1.55; color: var(--text-2); background: var(--surface-2); border: 1px solid var(--border); border-left: 2px solid var(--accent); border-radius: 8px; padding: 10px 12px; font-style: italic; margin: 8px 0 0; }
 .contact { display: flex; align-items: center; gap: 10px; }
 
