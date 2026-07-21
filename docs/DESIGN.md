@@ -1,10 +1,11 @@
 # Application Tracker — Design Doc
 
-A personal job-application tracker. Single user (you). Primary scenario — running
-locally; for demos the same code runs on a server as a single process behind a
-public URL (see §6, "Running: local and server"). Key trait: **the tracker is
-updated not only by you through the web UI, but also by me (Claude) — via
-CLI/API**, so it has two equal entry points on top of one logic layer.
+A personal job-application tracker for a single user. The primary scenario is
+running it locally; the same code can also run as a single process behind a
+public URL for a demo (see §6). Distinguishing trait: **two interfaces on one
+logic layer** — a web UI over REST and a terminal `tracker` CLI — so the tracker
+can be driven from the browser or scripted from the shell, and the behavior never
+diverges between them.
 
 ---
 
@@ -14,11 +15,12 @@ CLI/API**, so it has two equal entry points on top of one logic layer.
 - **Stack**: Python (FastAPI + SQLite) — backend, React + TypeScript (Vite) — frontend.
 - **Statuses**: `saved → applied → screening → interview → offer → accepted`,
   plus terminal `rejected / withdrawn / ghosted`.
-- **We store per job**: the JD itself (title + full description), **where** we
-  applied (channel), **what** we sent (resume version + cover letter / message
-  text), an event timeline, recruiter contact, next action.
-- **How I log**: the `tracker` CLI (works without a running server, writes straight
-  to SQLite through the same service layer as the REST API).
+- **Stored per job**: the JD itself (title + full description), **where** the
+  application went (channel), **what** was sent (resume version + cover letter /
+  message text), an event timeline, recruiter contact, next action.
+- **Two entry points**: the REST API behind the web UI, and the `tracker` CLI,
+  which works without a running server — writing straight to SQLite through the
+  same service layer as the API.
 
 ---
 
@@ -26,7 +28,7 @@ CLI/API**, so it has two equal entry points on top of one logic layer.
 
 Looked at Teal, Huntr, Simplify, ApplyArc, JobShinobi — the gist:
 
-| Tool | Core idea | What we borrow |
+| Tool | Core idea | What this project borrows |
 |-----------|--------------|--------------|
 | **Huntr** | Kanban board `wishlist → applied → interview → offer → rejected`, CRM layer | board as the main view, drag-and-drop status changes |
 | **Teal** | Table + funnel overview on top, resume-to-JD keyword matching | table view, tying a resume version to an application |
@@ -34,8 +36,9 @@ Looked at Teal, Huntr, Simplify, ApplyArc, JobShinobi — the gist:
 | **ApplyArc / JobShinobi** | Stages `Saved, Applied, Phone Screen, Interview, Offer, Rejected` + funnel metrics and follow-up cadence | conversion metrics, follow-up reminders |
 
 Common denominator across all: **stage funnel + detail card + conversion metrics**.
-None of them lets an agent (me) write to the tracker programmatically — that's our
-added value.
+What none of them offers is a scriptable CLI running on the same logic as the UI —
+a terminal-first entry point for fast logging and automation. That's the angle
+here.
 
 Research benchmarks for the dashboard: Applied→Interview conversion averages ~3%,
 average time from first interview to decision ~27 days (NACE, entry-level).
@@ -44,15 +47,15 @@ average time from first interview to decision ~27 days (NACE, entry-level).
 
 ## 3. Statuses (pipeline)
 
-Chose 9 statuses — they cover the real funnel without sprawling. Interview rounds
-are modeled **not** with new statuses but as timeline events (otherwise the status
-enum explodes).
+Nine statuses — enough to cover the real funnel without sprawling. Interview
+rounds are modeled **not** as new statuses but as timeline events (otherwise the
+status enum explodes).
 
 ### Active (card "in play")
 
 | Status | What it means | Typical next transition |
 |--------|-----------|------------------------|
-| `saved` | Found the job, haven't applied yet (wishlist) | `applied`, `withdrawn` |
+| `saved` | Found the job, not applied yet (wishlist) | `applied`, `withdrawn` |
 | `applied` | Application sent | `screening`, `rejected`, `ghosted` |
 | `screening` (UI: "In Contact") | A substantive reply came in: recruiter answered / conversation ongoing / a screen is scheduled or done — interview not yet scheduled | `interview`, `rejected`, `ghosted` |
 | `interview` | Interviews underway (1..N rounds — in the timeline) | `offer`, `rejected`, `ghosted` |
@@ -63,8 +66,8 @@ enum explodes).
 | Status | What it means |
 |--------|-----------|
 | `accepted` | Offer accepted — success ✅ |
-| `rejected` | Rejection (theirs or mine — distinguished by a field/event) |
-| `withdrawn` | I pulled the application |
+| `rejected` | Rejection (by the employer or the candidate — distinguished by a field/event) |
+| `withdrawn` | The candidate pulled the application |
 | `ghosted` | No reply >21 days after the last touch |
 
 **Rules:**
@@ -88,8 +91,8 @@ via fields in v1 (a separate `Contact` table if needed in v2).
 class Application:
     id: int                      # PK
     company: str                 # company name
-    title: str                   # role — "remember the title"
-    description: str             # full JD — "remember the description"
+    title: str                   # role
+    description: str             # full JD, kept verbatim
     job_url: str | None          # link to the posting
 
     location: str | None
@@ -98,12 +101,12 @@ class Application:
     salary_max: int | None
     currency: str | None         # USD / EUR / RUB ...
 
-    source: str                  # WHERE we applied: linkedin | hh | indeed |
+    source: str                  # WHERE it went: linkedin | hh | indeed |
                                  # company_site | referral | recruiter | email | other
     status: Status               # enum from §3
 
-    resume_version: str | None   # WHAT we sent: which resume (label/file)
-    cover_letter: str | None     # WHAT we wrote: cover letter / message text
+    resume_version: str | None   # WHAT was sent: which resume (label/file)
+    cover_letter: str | None     # WHAT was written: cover letter / message text
 
     contact_name: str | None     # recruiter / hiring manager
     contact_email: str | None
@@ -121,8 +124,9 @@ class Application:
 
 ### Event (one job's timeline)
 
-This is where the whole history of "what happened and when" lands, including **the
-texts we wrote** (outreach message, thank-you note, post-interview note).
+This is where the whole history of "what happened and when" lands, including the
+**texts that were written** (outreach message, thank-you note, post-interview
+note).
 
 ```python
 class Event:
@@ -141,24 +145,24 @@ and gives a free "diary" per job.
 
 ---
 
-## 5. How Claude updates the tracker (key requirement)
+## 5. Two interfaces on one service layer
 
-Two entry points on top of **one service layer** (`tracker/services.py`) so the
-logic doesn't diverge:
+The web UI and the CLI are two front doors on top of **one service layer**
+(`tracker/services.py`), so the logic never diverges:
 
 ```
               ┌─────────────────┐
-   React UI ──│  FastAPI (REST) │─┐
+   Web UI  ───│  FastAPI (REST) │─┐
               └─────────────────┘ │   ┌──────────────┐   ┌────────┐
                                   ├──▶│  services.py │──▶│ SQLite │
               ┌─────────────────┐ │   └──────────────┘   └────────┘
-   Claude  ───│  tracker (CLI)  │─┘
+   Terminal ──│  tracker (CLI)  │─┘
               └─────────────────┘
 ```
 
-**My primary interface is the CLI**, because it always works: no running server
-needed, no port to guess, writes straight to the same DB. Claude Code runs in this
-repo → I just call a command in Bash.
+The CLI is a first-class interface, not an afterthought: it needs no running
+server, doesn't depend on a port, and writes straight to the same database as the
+web app. That makes it the fast path for terminal entry and scripting.
 
 ```bash
 tracker add --company "Acme" --title "Senior Backend Engineer" \
@@ -172,29 +176,29 @@ tracker metrics
 ```
 
 `apply`/`status` automatically write a timeline event and move dates. The same
-commands map to REST endpoints (§8) — if the server is up I can also use `curl`,
-but the CLI is more reliable and I make it the default.
+operations map to REST endpoints (§8) — and because both surfaces call the same
+service functions, `curl` against a running server and the CLI produce identical
+results; the CLI is the default because it works without one.
 
-**On the server** (demo mode) there's no live writing from me: the server is a
-showcase, data is seeded once by `tracker seed` into a separate demo DB
-(`TRACKER_DB`), while my real applications stay in the local `tracker.db` via the
-CLI. So the CLI needs no remote DB access — the "how do I write to the server DB"
-question never arises.
+For a public demo, data is seeded once by `tracker seed` into a separate demo
+database (via `TRACKER_DB`), kept apart from the real local `tracker.db`. So the
+CLI never needs remote DB access — "how do I write to the server's DB" simply
+doesn't arise.
 
 ---
 
 ## 6. Architecture and stack
 
 ### Backend
-- **FastAPI** — REST + auto-generated OpenAPI (we type the frontend from it).
+- **FastAPI** — REST + auto-generated OpenAPI (the frontend is typed from it).
 - **SQLModel** (Pydantic + SQLAlchemy) — models = DB schema = validation in one place.
 - **SQLite** — a `tracker.db` file, more than enough for a single user.
 - **Uvicorn** — to run it.
-- Migrations: v1 without Alembic (`create_all`); the schema is still moving —
-  introducing migrations is premature. We'll add them once it stabilizes.
+- Migrations: v1 without Alembic (`create_all`); the schema is still moving, so
+  introducing migrations now is premature — they come once it stabilizes.
 - **No auth** — neither locally nor on the public demo. Since the demo is open, the
-  public instance runs on a separate DB with fake data (`tracker seed`), not my
-  real applications (see "Running" below).
+  public instance runs on a separate DB with fake data (`tracker seed`), not real
+  applications (see "Running" below).
 
 ### Frontend
 - **React + TypeScript + Vite**.
@@ -236,16 +240,16 @@ Ports: frontend (Vite dev) — **5173**, backend (FastAPI) — **8787** (Vite pr
 ### Running: local and server
 
 Two modes on one codebase — the stack and SQLite are shared; only the frontend
-build and the DB the process points at differ.
+build and the database the process points at differ.
 
 **Local (development):** Vite dev on **5173** proxies `/api` to FastAPI (**8787**);
-I write via the `tracker` CLI straight into `backend/tracker.db`.
+updates go through the `tracker` CLI straight into `backend/tracker.db`.
 
 **Server (demo, public URL):** the frontend is built (`vite build`), FastAPI serves
 `dist/` as static (+ SPA fallback to `index.html`) — all traffic on one port and
 origin, no more Vite proxy or CORS. No auth: the URL is public and `DELETE` is open,
 so the demo points at a **separate** DB with fake data (`TRACKER_DB` + `tracker
-seed`), not my real applications — if they break it, I re-seed.
+seed`), not real applications — if a visitor breaks it, re-seed.
 
 Deployment — a single `uvicorn` behind the host's reverse proxy (which terminates
 TLS). No Docker Compose, no separate nginx, no Postgres, no auth layer — overkill
@@ -327,14 +331,17 @@ Funnel + conversion cards + by-channel breakdown.
 
 ---
 
-## 11. Decisions I made on my own (tell me to change any)
+## 11. Design decisions
 
-1. **9 statuses**, interview rounds as events, not statuses. Can shrink to 6.
-2. **CLI as my primary access** (not just REST) — for reliability.
-3. **SQLite + single-user, no auth.** For the demo — the same code behind a public
-   URL on a separate DB with fake data (`tracker seed`). Auth, multi-user, and
-   Postgres are deliberately left out — it's a showcase, not a service.
-4. **Channels** (`source`): included both global ones (linkedin/indeed) and hh —
-   tell me where you actually search and I'll trim the list.
-5. **UI copy in English** — the whole interface is English; code/identifiers are
-   English too. The display label for `screening` is "In Contact".
+1. **Nine statuses**, interview rounds as events rather than statuses — covers the
+   funnel without letting the enum sprawl.
+2. **A first-class CLI, not just REST** — it works without a running server and is
+   the fast path for terminal entry and scripting; both surfaces share one service
+   layer, so nothing about the logic is CLI-specific.
+3. **SQLite, single-user, no auth.** For the demo, the same code runs behind a
+   public URL on a separate DB with fake data (`tracker seed`). Auth, multi-user,
+   and Postgres are deliberately out of scope — this is a showcase, not a service.
+4. **Channels** (`source`): a mix of international (LinkedIn, Indeed) and regional
+   (hh.ru, Telegram) sources, matching a mixed RU + international job search.
+5. **UI copy in English** — the whole interface and all identifiers are English;
+   the display label for `screening` is "In Contact".
