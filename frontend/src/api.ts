@@ -30,7 +30,6 @@ export interface Application {
   applied_via: string
   applied_ref?: string | null
   status: Status
-  priority: number
   cover_letter?: string | null
   contact_name?: string | null
   contact_email?: string | null

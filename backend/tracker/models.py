@@ -131,7 +131,6 @@ class Application(SQLModel, table=True):
     applied_ref: Optional[str] = None  # exact apply target — a URL or an email
 
     status: Status = Field(default=Status.saved, index=True)
-    priority: int = 3  # 1..5, how much we want it
 
     cover_letter: Optional[str] = None  # WHAT we wrote — cover letter / message text
 
@@ -214,7 +213,6 @@ class ApplicationCreate(SQLModel):
     applied_via: str = "other"
     applied_ref: Optional[str] = None
     status: Status = Status.saved
-    priority: int = 3
     cover_letter: Optional[str] = None
     contact_name: Optional[str] = None
     contact_email: Optional[str] = None
@@ -238,7 +236,6 @@ class ApplicationUpdate(SQLModel):
     currency: Optional[str] = None
     applied_via: Optional[str] = None
     applied_ref: Optional[str] = None
-    priority: Optional[int] = None
     cover_letter: Optional[str] = None
     contact_name: Optional[str] = None
     contact_email: Optional[str] = None
@@ -284,7 +281,6 @@ class ApplicationRead(SQLModel):
     applied_via: str
     applied_ref: Optional[str]
     status: Status
-    priority: int
     cover_letter: Optional[str]
     contact_name: Optional[str]
     contact_email: Optional[str]

@@ -86,7 +86,6 @@ def add(
     applied_via: str = typer.Option("other", "--applied-via", help="how you applied: email | company site | linkedin | ..."),
     applied_ref: Optional[str] = typer.Option(None, "--applied-ref", help="exact apply target — a URL or an email"),
     status: str = typer.Option("saved", "--status"),
-    priority: int = typer.Option(3, "--priority", "-p", min=1, max=5),
     salary_min: Optional[int] = typer.Option(None, "--salary-min"),
     salary_max: Optional[int] = typer.Option(None, "--salary-max"),
     currency: Optional[str] = typer.Option(None, "--currency"),
@@ -111,7 +110,6 @@ def add(
         applied_via=applied_via,
         applied_ref=applied_ref,
         status=_parse_status(status),
-        priority=priority,
         salary_min=salary_min,
         salary_max=salary_max,
         currency=currency,
@@ -162,7 +160,6 @@ def show(app_id: int = typer.Argument(..., metavar="ID")) -> None:
         if a.found_via or a.found_url:
             found = a.found_via or "—"
             typer.echo(f"  found:     {found}" + (f" ({a.found_url})" if a.found_url else ""))
-        typer.echo(f"  priority:  {'★' * a.priority}{'☆' * (5 - a.priority)}")
         typer.echo(f"  salary:    {_fmt_salary(a)}")
         if a.location:
             typer.echo(f"  location:  {a.location} ({a.work_mode.value if a.work_mode else '—'})")
@@ -253,7 +250,6 @@ def set_fields(
     app_id: int = typer.Argument(..., metavar="ID"),
     next_action: Optional[str] = typer.Option(None, "--next-action"),
     next_action_date: Optional[str] = typer.Option(None, "--next-action-date", help="YYYY-MM-DD"),
-    priority: Optional[int] = typer.Option(None, "--priority", "-p", min=1, max=5),
     contact_name: Optional[str] = typer.Option(None, "--contact-name"),
     contact_email: Optional[str] = typer.Option(None, "--contact-email"),
 ) -> None:
@@ -261,7 +257,6 @@ def set_fields(
     patch = ApplicationUpdate(
         next_action=next_action,
         next_action_date=date.fromisoformat(next_action_date) if next_action_date else None,
-        priority=priority,
         contact_name=contact_name,
         contact_email=contact_email,
     )
