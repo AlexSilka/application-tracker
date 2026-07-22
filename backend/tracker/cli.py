@@ -254,12 +254,18 @@ def set_fields(
     contact_email: Optional[str] = typer.Option(None, "--contact-email"),
 ) -> None:
     """Update individual job fields."""
-    patch = ApplicationUpdate(
-        next_action=next_action,
-        next_action_date=date.fromisoformat(next_action_date) if next_action_date else None,
-        contact_name=contact_name,
-        contact_email=contact_email,
-    )
+    # Only patch fields the user actually passed — building the update with explicit
+    # Nones would clear whatever the record already holds (next_action, contacts, …).
+    updates: dict = {}
+    if next_action is not None:
+        updates["next_action"] = next_action
+    if next_action_date is not None:
+        updates["next_action_date"] = date.fromisoformat(next_action_date)
+    if contact_name is not None:
+        updates["contact_name"] = contact_name
+    if contact_email is not None:
+        updates["contact_email"] = contact_email
+    patch = ApplicationUpdate(**updates)
     with open_session() as s:
         try:
             services.update_application(s, app_id, patch)
