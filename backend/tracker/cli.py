@@ -96,11 +96,19 @@ def add(
     tags: Optional[str] = typer.Option(None, "--tags", help="comma-separated"),
     next_action: Optional[str] = typer.Option(None, "--next-action"),
     next_action_date: Optional[str] = typer.Option(None, "--next-action-date", help="YYYY-MM-DD"),
+    contact_name: Optional[str] = typer.Option(None, "--contact-name"),
+    contact_email: Optional[str] = typer.Option(None, "--contact-email"),
+    contact_url: Optional[str] = typer.Option(None, "--contact-url", help="recruiter / contact profile link, e.g. LinkedIn"),
+    cover_letter: Optional[str] = typer.Option(None, "--cover-letter", help="the message / cover letter you sent"),
+    cover_letter_file: Optional[Path] = typer.Option(None, "--cover-letter-file"),
 ) -> None:
     """Add a job."""
     desc = description or ""
     if description_file:
         desc = description_file.read_text(encoding="utf-8")
+    cover = cover_letter
+    if cover_letter_file:
+        cover = cover_letter_file.read_text(encoding="utf-8")
     payload = ApplicationCreate(
         company=company,
         title=title,
@@ -119,6 +127,10 @@ def add(
         tags=[t.strip() for t in tags.split(",")] if tags else [],
         next_action=next_action,
         next_action_date=date.fromisoformat(next_action_date) if next_action_date else None,
+        contact_name=contact_name,
+        contact_email=contact_email,
+        contact_url=contact_url,
+        cover_letter=cover,
     )
     with open_session() as s:
         a = services.create_application(s, payload)
@@ -168,10 +180,13 @@ def show(app_id: int = typer.Argument(..., metavar="ID")) -> None:
         if a.next_action:
             when = f" — {a.next_action_date}" if a.next_action_date else ""
             typer.echo(f"  next:      {a.next_action}{when}")
-        if a.contact_name:
-            typer.echo(f"  contact:   {a.contact_name} {a.contact_email or ''}")
+        if a.contact_name or a.contact_email or a.contact_url:
+            bits = [b for b in (a.contact_name, a.contact_email, a.contact_url) if b]
+            typer.echo(f"  contact:   {'  ·  '.join(bits)}")
         if a.description:
             typer.echo(f"\n  Job:\n    {a.description[:300]}")
+        if a.cover_letter:
+            typer.echo(f"\n  Cover letter:\n    {a.cover_letter[:300]}")
         typer.echo("\n  Timeline:")
         for e in a.events:
             when = e.occurred_at.date().isoformat()
@@ -252,6 +267,7 @@ def set_fields(
     next_action_date: Optional[str] = typer.Option(None, "--next-action-date", help="YYYY-MM-DD"),
     contact_name: Optional[str] = typer.Option(None, "--contact-name"),
     contact_email: Optional[str] = typer.Option(None, "--contact-email"),
+    contact_url: Optional[str] = typer.Option(None, "--contact-url", help="recruiter / contact profile link, e.g. LinkedIn"),
 ) -> None:
     """Update individual job fields."""
     # Only patch fields the user actually passed — building the update with explicit
@@ -265,6 +281,8 @@ def set_fields(
         updates["contact_name"] = contact_name
     if contact_email is not None:
         updates["contact_email"] = contact_email
+    if contact_url is not None:
+        updates["contact_url"] = contact_url
     patch = ApplicationUpdate(**updates)
     with open_session() as s:
         try:
