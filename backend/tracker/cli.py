@@ -100,7 +100,8 @@ def add(
     title: str = typer.Option(..., "--title", "-t"),
     company_url: Optional[str] = typer.Option(None, "--company-url", help="the employer's own site / careers page"),
     found_via: Optional[str] = typer.Option(None, "--found-via", help="where you found it: linkedin | hh.ru | aggregator | ..."),
-    posting_url: Optional[str] = typer.Option(None, "--posting-url", help="link to the job posting"),
+    found_url: Optional[str] = typer.Option(None, "--found-url", help="the listing where you found it"),
+    job_url: Optional[str] = typer.Option(None, "--job-url", help="link to the job posting"),
     applied_via: str = typer.Option("other", "--applied-via", help="how you applied: email | company site | linkedin | ..."),
     applied_ref: Optional[str] = typer.Option(None, "--applied-ref", help="exact apply target — a URL or an email"),
     direction: str = typer.Option("outbound", "--direction", help="outbound (I applied) | inbound (they reached out)"),
@@ -134,7 +135,8 @@ def add(
         title=title,
         company_url=company_url,
         found_via=found_via,
-        posting_url=posting_url,
+        found_url=found_url,
+        job_url=job_url,
         applied_via=applied_via,
         applied_ref=applied_ref,
         direction=_parse_direction(direction),
@@ -196,8 +198,10 @@ def show(app_id: int = typer.Argument(..., metavar="ID")) -> None:
         typer.echo(f"  applied:   {a.applied_via}" + (f" → {a.applied_ref}" if a.applied_ref else ""))
         if a.found_via:
             typer.echo(f"  via:       {a.found_via}")
-        if a.posting_url:
-            typer.echo(f"  posting:   {a.posting_url}")
+        if a.found_url:
+            typer.echo(f"  found:     {a.found_url}")
+        if a.job_url:
+            typer.echo(f"  job:       {a.job_url}")
         typer.echo(f"  salary:    {_fmt_salary(a)}")
         if a.location:
             typer.echo(f"  location:  {a.location} ({a.work_mode.value if a.work_mode else '—'})")
@@ -297,7 +301,8 @@ def set_fields(
     contact_name: Optional[str] = typer.Option(None, "--contact-name"),
     contact_email: Optional[str] = typer.Option(None, "--contact-email"),
     contact_url: Optional[str] = typer.Option(None, "--contact-url", help="recruiter / contact profile link, e.g. LinkedIn"),
-    posting_url: Optional[str] = typer.Option(None, "--posting-url", help="link to the job posting"),
+    found_url: Optional[str] = typer.Option(None, "--found-url", help="the listing where you found it"),
+    job_url: Optional[str] = typer.Option(None, "--job-url", help="link to the job posting"),
     company_url: Optional[str] = typer.Option(None, "--company-url", help="the employer's own site / careers page"),
     applied_ref: Optional[str] = typer.Option(None, "--applied-ref", help="exact apply target — a URL or an email"),
 ) -> None:
@@ -322,8 +327,10 @@ def set_fields(
         updates["direction"] = _parse_direction(direction)
     if priority is not None:
         updates["priority"] = _parse_priority(priority)
-    if posting_url is not None:
-        updates["posting_url"] = posting_url
+    if found_url is not None:
+        updates["found_url"] = found_url
+    if job_url is not None:
+        updates["job_url"] = job_url
     if company_url is not None:
         updates["company_url"] = company_url
     if applied_ref is not None:

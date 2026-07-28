@@ -18,7 +18,8 @@ function initial(state: FormState): JobInput {
       title: a.title,
       description: a.description ?? '',
       found_via: a.found_via ?? '',
-      posting_url: a.posting_url ?? '',
+      found_url: a.found_url ?? '',
+      job_url: a.job_url ?? '',
       location: a.location ?? '',
       work_mode: a.work_mode ?? '',
       salary_min: a.salary_min ?? null,
@@ -44,7 +45,8 @@ function initial(state: FormState): JobInput {
     title: '',
     description: '',
     found_via: '',
-    posting_url: '',
+    found_url: '',
+    job_url: '',
     location: '',
     work_mode: '',
     salary_min: null,
@@ -98,7 +100,8 @@ export function JobForm({ state, onClose }: { state: FormState; onClose: () => v
         description: f.description?.trim() || '',
         tags: tagsText.split(',').map((t) => t.trim()).filter(Boolean),
         found_via: f.found_via || null,
-        posting_url: f.posting_url || null,
+        found_url: f.found_url || null,
+        job_url: f.job_url || null,
         applied_ref: f.applied_ref || null,
         location: f.location || null,
         work_mode: f.work_mode || null,
@@ -292,8 +295,12 @@ export function JobForm({ state, onClose }: { state: FormState; onClose: () => v
               </select>
             </label>
             <label className="field">
+              <span>Found at (URL)</span>
+              <input value={f.found_url ?? ''} onChange={(e) => set('found_url', e.target.value)} placeholder="https://…" />
+            </label>
+            <label className="field">
               <span>Job posting (URL)</span>
-              <input value={f.posting_url ?? ''} onChange={(e) => set('posting_url', e.target.value)} placeholder="https://…" />
+              <input value={f.job_url ?? ''} onChange={(e) => set('job_url', e.target.value)} placeholder="https://…" />
             </label>
             <label className="field span2">
               <span>Applied to (URL or email)</span>

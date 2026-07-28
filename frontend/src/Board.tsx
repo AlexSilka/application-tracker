@@ -296,11 +296,19 @@ function DetailDrawer({
           ) : (
             <p className="jd empty">No description saved</p>
           )}
-          {app.posting_url && (
+          {app.job_url && (
             <p style={{ marginTop: 8 }}>
-              <a href={app.posting_url} target="_blank" rel="noreferrer"
+              <a href={app.job_url} target="_blank" rel="noreferrer"
                  style={{ color: 'var(--accent)', fontSize: 13, textDecoration: 'none' }}>
                 Open posting ↗
+              </a>
+            </p>
+          )}
+          {app.found_url && (
+            <p style={{ marginTop: 8 }}>
+              <a href={app.found_url} target="_blank" rel="noreferrer"
+                 style={{ color: 'var(--accent)', fontSize: 13, textDecoration: 'none' }}>
+                View listing ↗
               </a>
             </p>
           )}
@@ -389,7 +397,7 @@ function DetailDrawer({
         >
           Delete
         </button>
-        {app.posting_url && <button onClick={() => window.open(app.posting_url!, '_blank')}>Open ↗</button>}
+        {app.job_url && <button onClick={() => window.open(app.job_url!, '_blank')}>Open ↗</button>}
       </div>
     </aside>
   )
