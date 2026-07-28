@@ -20,6 +20,7 @@ def utcnow() -> datetime:
 class Status(str, Enum):
     saved = "saved"
     applied = "applied"
+    in_contact = "in_contact"
     screening = "screening"
     interview = "interview"
     offer = "offer"
@@ -63,22 +64,25 @@ class EventKind(str, Enum):
 STATUS_RANK: dict[Status, int] = {
     Status.saved: 0,
     Status.applied: 1,
-    Status.screening: 2,
-    Status.interview: 3,
-    Status.offer: 4,
-    Status.accepted: 5,
+    Status.in_contact: 2,
+    Status.screening: 3,
+    Status.interview: 4,
+    Status.offer: 5,
+    Status.accepted: 6,
 }
 RANK_BY_VALUE: dict[str, int] = {s.value: r for s, r in STATUS_RANK.items()}
 
-ACTIVE_STATUSES = [Status.saved, Status.applied, Status.screening, Status.interview, Status.offer]
+ACTIVE_STATUSES = [Status.saved, Status.applied, Status.in_contact, Status.screening, Status.interview, Status.offer]
 TERMINAL_STATUSES = [Status.accepted, Status.rejected, Status.withdrawn, Status.ghosted]
 
 # Human-readable labels for CLI output, /api/meta and auto-generated event text.
-# `screening` shows as "In Contact" per the design (a substantive employer reply).
+# `in_contact` shows as "In Contact" (a substantive employer reply); `screening` is a
+# scheduled recruiter / HR screening call, the stage before the interview rounds.
 STATUS_LABEL: dict[Status, str] = {
     Status.saved: "Saved",
     Status.applied: "Applied",
-    Status.screening: "In Contact",
+    Status.in_contact: "In Contact",
+    Status.screening: "Screening",
     Status.interview: "Interview",
     Status.offer: "Offer",
     Status.accepted: "Accepted",

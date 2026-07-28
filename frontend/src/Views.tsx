@@ -76,7 +76,7 @@ export function MetricsView() {
   const f = m.funnel
   const base = f.applied || 1
   const pct = (v: number) => Math.round((100 * v) / base)
-  const respToInterview = f.screening ? Math.round((100 * f.interview) / f.screening) : 0
+  const respToInterview = f.in_contact ? Math.round((100 * f.interview) / f.in_contact) : 0
 
   return (
     <div className="metrics">
@@ -86,7 +86,8 @@ export function MetricsView() {
           <p className="hint">How many applications reach each stage</p>
           <div className="funnel">
             <FunnelRow label="Applied" value={f.applied} width={100} color="var(--accent)" />
-            <FunnelRow label="In Contact" value={f.screening} width={pct(f.screening)} color="var(--st-screening)" />
+            <FunnelRow label="In Contact" value={f.in_contact} width={pct(f.in_contact)} color="var(--st-in_contact)" />
+            <FunnelRow label="Screening" value={f.screening} width={pct(f.screening)} color="var(--st-screening)" />
             <FunnelRow label="Interview" value={f.interview} width={pct(f.interview)} color="var(--st-interview)" />
             <FunnelRow label="Offer" value={f.offer} width={pct(f.offer)} color="var(--st-offer)" />
           </div>
@@ -96,9 +97,9 @@ export function MetricsView() {
           <h3>Conversions</h3>
           <p className="hint">Key transitions</p>
           <div className="conv-tiles">
-            <Conv label="Applied → Response" note={`${f.screening} / ${f.applied}`}
+            <Conv label="Applied → Response" note={`${f.in_contact} / ${f.applied}`}
                   value={`${m.conversions.response_rate}%`} color="var(--good)" />
-            <Conv label="Response → Interview" note={`${f.interview} / ${f.screening}`}
+            <Conv label="Response → Interview" note={`${f.interview} / ${f.in_contact}`}
                   value={`${respToInterview}%`} color="var(--st-interview)" />
             <Conv label="Interview → Offer" note={`${f.offer} / ${f.interview}`}
                   value={`${m.conversions.interview_to_offer}%`} color="var(--st-offer)" />

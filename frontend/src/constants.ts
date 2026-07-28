@@ -3,7 +3,8 @@ import type { Status } from './api'
 export const STATUS_LABEL: Record<Status, string> = {
   saved: 'Saved',
   applied: 'Applied',
-  screening: 'In Contact',
+  in_contact: 'In Contact',
+  screening: 'Screening',
   interview: 'Interview',
   offer: 'Offer',
   accepted: 'Accepted',

@@ -269,6 +269,7 @@ def metrics(session: Session) -> dict:
     total = len(apps)
     reached = {a.id: _reached_rank(a) for a in apps}
     applied = sum(1 for r in reached.values() if r >= STATUS_RANK[Status.applied])
+    in_contact = sum(1 for r in reached.values() if r >= STATUS_RANK[Status.in_contact])
     screening = sum(1 for r in reached.values() if r >= STATUS_RANK[Status.screening])
     interview = sum(1 for r in reached.values() if r >= STATUS_RANK[Status.interview])
     offer = sum(1 for r in reached.values() if r >= STATUS_RANK[Status.offer])
@@ -317,6 +318,7 @@ def metrics(session: Session) -> dict:
         "offers": sum(1 for a in apps if a.status == Status.offer),
         "funnel": {
             "applied": applied,
+            "in_contact": in_contact,
             "screening": screening,
             "interview": interview,
             "offer": offer,
@@ -325,7 +327,7 @@ def metrics(session: Session) -> dict:
         "conversions": {
             "applied_to_interview": _pct(interview, applied),
             "interview_to_offer": _pct(offer, interview),
-            "response_rate": _pct(screening, applied),
+            "response_rate": _pct(in_contact, applied),
         },
         "by_channel": by_channel,
         "follow_ups": follow_ups,
@@ -369,7 +371,7 @@ def seed(session: Session, force: bool = False) -> int:
              location="Moscow", work_mode="onsite", applied_days=9,
              next_action="follow-up — no reply", next_after=-2, tags=["python", "django"]),
         dict(company="JetBrains", title="Software Developer, YouTrack", applied_via="referral",
-             status=Status.screening, salary_min=80000, salary_max=110000, currency="EUR",
+             status=Status.in_contact, salary_min=80000, salary_max=110000, currency="EUR",
              location="Prague", work_mode="hybrid", applied_days=5,
              next_action="recruiter call", next_after=1,
              contact_name="Anna K.", contact_email="anna@jetbrains.com", tags=["kotlin", "python"]),
@@ -400,7 +402,7 @@ def seed(session: Session, force: bool = False) -> int:
              found_via="aggregator", found_url="https://gorod.work/vacancy/ozon-backend-2291",
              applied_via="email", applied_ref="jobs@ozon.ru", status=Status.rejected,
              salary_min=300000, salary_max=420000, currency="RUB", location="Moscow",
-             work_mode="hybrid", applied_days=18, reached=Status.screening,
+             work_mode="hybrid", applied_days=18, reached=Status.in_contact,
              tags=["go"]),
         dict(company="Notion", title="Software Engineer", applied_via="linkedin", status=Status.ghosted,
              salary_min=140000, salary_max=170000, currency="USD", location="Remote (US)",
@@ -447,7 +449,7 @@ def _seed_timeline(session: Session, app: Application, status: Status, applied_d
     def at(n: int) -> datetime:
         return now - timedelta(days=n)
 
-    path = [Status.applied, Status.screening, Status.interview, Status.offer]
+    path = [Status.applied, Status.in_contact, Status.screening, Status.interview, Status.offer]
     target = reached or status
     target_rank = STATUS_RANK.get(target, STATUS_RANK[Status.applied])
 

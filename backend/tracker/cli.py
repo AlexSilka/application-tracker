@@ -359,7 +359,8 @@ def metrics() -> None:
     c = m["conversions"]
     typer.secho("Funnel", bold=True)
     typer.echo(f"  applied:     {f['applied']}")
-    typer.echo(f"  in contact:  {f['screening']}")
+    typer.echo(f"  in contact:  {f['in_contact']}")
+    typer.echo(f"  screening:   {f['screening']}")
     typer.echo(f"  interview:   {f['interview']}")
     typer.echo(f"  offer:       {f['offer']}")
     typer.echo(f"  accepted:    {f['accepted']}")

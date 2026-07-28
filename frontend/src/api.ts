@@ -2,7 +2,7 @@
 // tracker/models.py. (v2: generate these types from the OpenAPI schema.)
 
 export type Status =
-  | 'saved' | 'applied' | 'screening' | 'interview' | 'offer'
+  | 'saved' | 'applied' | 'in_contact' | 'screening' | 'interview' | 'offer'
   | 'accepted' | 'rejected' | 'withdrawn' | 'ghosted'
 
 export interface AppEvent {
@@ -99,7 +99,7 @@ export interface Metrics {
   total: number
   active: number
   offers: number
-  funnel: { applied: number; screening: number; interview: number; offer: number; accepted: number }
+  funnel: { applied: number; in_contact: number; screening: number; interview: number; offer: number; accepted: number }
   conversions: { applied_to_interview: number; interview_to_offer: number; response_rate: number }
   by_channel: { applied_via: string; applied: number; interview: number; rate: number }[]
   follow_ups: {

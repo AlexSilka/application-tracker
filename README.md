@@ -111,14 +111,14 @@ same functions.
 ## Status model
 
 ```
-saved · applied · screening · interview · offer · accepted · rejected · withdrawn · ghosted
+saved · applied · in_contact · screening · interview · offer · accepted · rejected · withdrawn · ghosted
 ```
 
-`saved → applied → screening → interview → offer → accepted` is the happy path;
-`rejected / withdrawn / ghosted` are terminal. Interview rounds are modeled as
-timeline events rather than statuses, so the enum stays small. In the UI,
-`screening` reads as **In Contact** — any substantive reply from an employer
-before an interview is scheduled.
+`saved → applied → in_contact → screening → interview → offer → accepted` is the
+happy path; `rejected / withdrawn / ghosted` are terminal. `in_contact` reads as
+**In Contact** — any substantive reply from an employer; `screening` is a
+scheduled recruiter / HR screening call. Further interview rounds are modeled as
+timeline events rather than statuses, so the enum stays small.
 
 ## REST API
 
