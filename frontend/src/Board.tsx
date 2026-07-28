@@ -75,7 +75,7 @@ function Card({
       </div>
       {(app.next_action || app.next_action_date) && (
         <div className="card-foot">
-          <span className="age">{app.applied_at ? stageAge(app.updated_at) : 'not applied'}</span>
+          <span className="age">{app.applied_at || app.direction === 'inbound' ? stageAge(app.updated_at) : 'not applied'}</span>
           <NextPill app={app} />
         </div>
       )}
