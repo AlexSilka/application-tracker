@@ -68,10 +68,12 @@ function Card({
         </span>
         {salary && <span className="chip salary">{salary}</span>}
       </div>
-      <div className="card-foot">
-        <span className="age">{app.applied_at ? stageAge(app.updated_at) : 'not applied'}</span>
-        <NextPill app={app} />
-      </div>
+      {(app.next_action || app.next_action_date) && (
+        <div className="card-foot">
+          <span className="age">{app.applied_at ? stageAge(app.updated_at) : 'not applied'}</span>
+          <NextPill app={app} />
+        </div>
+      )}
     </div>
   )
 }
