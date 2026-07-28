@@ -48,6 +48,7 @@ function Card({
   }
   if (isDragging) style.opacity = 0.55
   const salary = formatSalary(app)
+  const src = app.found_via || app.applied_via
   return (
     <div
       ref={setNodeRef}
@@ -62,10 +63,13 @@ function Card({
       </div>
       <div className="card-title">{app.title}</div>
       <div className="card-meta">
-        <span className="chip">
-          <span className="cdot" style={{ background: SRC_COLOR[app.applied_via] ?? 'var(--st-saved)' }} />
-          {app.applied_via}
-        </span>
+        {app.direction === 'inbound' && <span className="chip inbound">inbound</span>}
+        {src && (
+          <span className="chip">
+            <span className="cdot" style={{ background: SRC_COLOR[src] ?? 'var(--st-saved)' }} />
+            {src}
+          </span>
+        )}
         {salary && <span className="chip salary">{salary}</span>}
       </div>
       {(app.next_action || app.next_action_date) && (

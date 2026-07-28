@@ -26,6 +26,7 @@ function initial(state: FormState): JobInput {
       currency: a.currency ?? '',
       applied_via: a.applied_via,
       applied_ref: a.applied_ref ?? '',
+      direction: a.direction ?? 'outbound',
       status: a.status,
       cover_letter: a.cover_letter ?? '',
       contact_name: a.contact_name ?? '',
@@ -50,6 +51,7 @@ function initial(state: FormState): JobInput {
     currency: '',
     applied_via: 'other',
     applied_ref: '',
+    direction: 'outbound',
     status: state.status ?? 'saved',
     cover_letter: '',
     contact_name: '',
@@ -177,6 +179,17 @@ export function JobForm({ state, onClose }: { state: FormState; onClose: () => v
               <select value={f.applied_via} onChange={(e) => set('applied_via', e.target.value)}>
                 {(meta?.applied_via ?? []).map((s) => (
                   <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              <span>Direction</span>
+              <select
+                value={f.direction ?? 'outbound'}
+                onChange={(e) => set('direction', e.target.value as 'inbound' | 'outbound')}
+              >
+                {(meta?.directions ?? ['outbound', 'inbound']).map((d) => (
+                  <option key={d} value={d}>{d}</option>
                 ))}
               </select>
             </label>

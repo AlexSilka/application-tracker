@@ -12,6 +12,7 @@ from tracker.db import get_session, init_db
 from tracker.models import (
     ACTIVE_STATUSES,
     APPLIED_VIA,
+    Direction,
     FOUND_VIA,
     STATUS_LABEL,
     TERMINAL_STATUSES,
@@ -72,6 +73,7 @@ def meta() -> dict:
         "found_via": FOUND_VIA,
         "applied_via": APPLIED_VIA,
         "work_modes": [w.value for w in WorkMode],
+        "directions": [d.value for d in Direction],
     }
 
 

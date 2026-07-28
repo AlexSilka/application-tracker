@@ -35,6 +35,11 @@ class WorkMode(str, Enum):
     remote = "remote"
 
 
+class Direction(str, Enum):
+    outbound = "outbound"  # I found the posting and applied
+    inbound = "inbound"  # a recruiter / employer reached out to me
+
+
 class EventKind(str, Enum):
     created = "created"
     status_change = "status_change"
@@ -130,6 +135,9 @@ class Application(SQLModel, table=True):
     applied_via: str = "other"  # email | company site | linkedin | referral | ...
     applied_ref: Optional[str] = None  # exact apply target — a URL or an email
 
+    # Did I reach out (outbound) or did a recruiter / employer contact me (inbound)?
+    direction: Direction = Field(default=Direction.outbound)
+
     status: Status = Field(default=Status.saved, index=True)
 
     cover_letter: Optional[str] = None  # WHAT we wrote — cover letter / message text
@@ -212,6 +220,7 @@ class ApplicationCreate(SQLModel):
     currency: Optional[str] = None
     applied_via: str = "other"
     applied_ref: Optional[str] = None
+    direction: Direction = Direction.outbound
     status: Status = Status.saved
     cover_letter: Optional[str] = None
     contact_name: Optional[str] = None
@@ -236,6 +245,7 @@ class ApplicationUpdate(SQLModel):
     currency: Optional[str] = None
     applied_via: Optional[str] = None
     applied_ref: Optional[str] = None
+    direction: Optional[Direction] = None
     cover_letter: Optional[str] = None
     contact_name: Optional[str] = None
     contact_email: Optional[str] = None
@@ -280,6 +290,7 @@ class ApplicationRead(SQLModel):
     currency: Optional[str]
     applied_via: str
     applied_ref: Optional[str]
+    direction: Direction
     status: Status
     cover_letter: Optional[str]
     contact_name: Optional[str]

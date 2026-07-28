@@ -29,6 +29,7 @@ export interface Application {
   currency?: string | null
   applied_via: string
   applied_ref?: string | null
+  direction: 'inbound' | 'outbound'
   status: Status
   cover_letter?: string | null
   contact_name?: string | null
@@ -63,6 +64,7 @@ export interface JobInput {
   currency?: string | null
   applied_via?: string
   applied_ref?: string | null
+  direction?: 'inbound' | 'outbound'
   status?: Status
   cover_letter?: string | null
   contact_name?: string | null
@@ -87,6 +89,7 @@ export interface Meta {
   found_via: string[]
   applied_via: string[]
   work_modes: string[]
+  directions: string[]
 }
 
 export interface Metrics {

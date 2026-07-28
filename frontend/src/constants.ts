@@ -28,6 +28,8 @@ export const SRC_COLOR: Record<string, string> = {
   indeed: 'var(--st-interview)',
   recruiter: 'var(--st-offer)',
   email: 'var(--st-withdrawn)',
+  aggregator: 'var(--st-ghosted)',
+  google: 'var(--st-screening)',
 }
 
 export const KIND_LABEL: Record<string, string> = {
