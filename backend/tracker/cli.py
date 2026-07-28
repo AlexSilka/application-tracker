@@ -296,6 +296,9 @@ def set_fields(
     contact_name: Optional[str] = typer.Option(None, "--contact-name"),
     contact_email: Optional[str] = typer.Option(None, "--contact-email"),
     contact_url: Optional[str] = typer.Option(None, "--contact-url", help="recruiter / contact profile link, e.g. LinkedIn"),
+    found_url: Optional[str] = typer.Option(None, "--found-url", help="link to the job posting"),
+    company_url: Optional[str] = typer.Option(None, "--company-url", help="the employer's own site / careers page"),
+    applied_ref: Optional[str] = typer.Option(None, "--applied-ref", help="exact apply target — a URL or an email"),
 ) -> None:
     """Update individual job fields."""
     # Only patch fields the user actually passed — a plain set of one field must not
@@ -318,6 +321,12 @@ def set_fields(
         updates["direction"] = _parse_direction(direction)
     if priority is not None:
         updates["priority"] = _parse_priority(priority)
+    if found_url is not None:
+        updates["found_url"] = found_url
+    if company_url is not None:
+        updates["company_url"] = company_url
+    if applied_ref is not None:
+        updates["applied_ref"] = applied_ref
     patch = ApplicationUpdate(**updates)
     with open_session() as s:
         try:
