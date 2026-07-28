@@ -262,6 +262,13 @@ function DetailDrawer({
         </span>
         <div className="drawer-facts">
           {salary && <span className="chip salary">{salary}</span>}
+          <span className={app.direction === 'inbound' ? 'chip inbound' : 'chip'}>{app.direction}</span>
+          {app.found_via && (
+            <span className="chip">
+              <span className="cdot" style={{ background: SRC_COLOR[app.found_via] ?? 'var(--st-saved)' }} />
+              {app.found_via}
+            </span>
+          )}
           <span className="chip">
             <span className="cdot" style={{ background: SRC_COLOR[app.applied_via] ?? 'var(--st-saved)' }} />
             {app.applied_via}
