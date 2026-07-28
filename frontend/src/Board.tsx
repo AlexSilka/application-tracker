@@ -60,6 +60,7 @@ function Card({
     >
       <div className="card-top">
         <div className="card-co">{app.company}</div>
+        {app.priority && <span className={`prio-dot prio-${app.priority}`} title={`priority: ${app.priority}`} />}
       </div>
       <div className="card-title">{app.title}</div>
       <div className="card-meta">
