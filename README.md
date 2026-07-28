@@ -91,7 +91,7 @@ web API, so it works whether or not the server is running. Run it from
 
 ```bash
 tracker add -c "Acme" -t "Senior Backend Engineer" \
-            --found-via linkedin --found-url https://... --description-file jd.md
+            --found-via linkedin --posting-url https://... --description-file jd.md
 tracker list [--status applied]
 tracker show 12
 tracker apply 12 --applied-via email --applied-ref jobs@acme.com \

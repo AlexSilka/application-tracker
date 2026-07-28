@@ -21,7 +21,7 @@ export interface Application {
   title: string
   description: string
   found_via?: string | null
-  found_url?: string | null
+  posting_url?: string | null
   location?: string | null
   work_mode?: string | null
   salary_min?: number | null
@@ -57,7 +57,7 @@ export interface JobInput {
   title: string
   description?: string
   found_via?: string | null
-  found_url?: string | null
+  posting_url?: string | null
   location?: string | null
   work_mode?: string | null
   salary_min?: number | null

@@ -132,7 +132,7 @@ class Application(SQLModel, table=True):
 
     # WHERE we found it (first-touch): the discovery channel + the listing link we saw.
     found_via: Optional[str] = None  # linkedin | hh.ru | aggregator | referral | ...
-    found_url: Optional[str] = None  # link to the posting where we found it
+    posting_url: Optional[str] = None  # link to the job posting (however you came across it)
 
     location: Optional[str] = None
     work_mode: Optional[WorkMode] = None
@@ -223,7 +223,7 @@ class ApplicationCreate(SQLModel):
     title: str
     description: str = ""
     found_via: Optional[str] = None
-    found_url: Optional[str] = None
+    posting_url: Optional[str] = None
     location: Optional[str] = None
     work_mode: Optional[WorkMode] = None
     salary_min: Optional[int] = None
@@ -249,7 +249,7 @@ class ApplicationUpdate(SQLModel):
     title: Optional[str] = None
     description: Optional[str] = None
     found_via: Optional[str] = None
-    found_url: Optional[str] = None
+    posting_url: Optional[str] = None
     location: Optional[str] = None
     work_mode: Optional[WorkMode] = None
     salary_min: Optional[int] = None
@@ -295,7 +295,7 @@ class ApplicationRead(SQLModel):
     title: str
     description: str
     found_via: Optional[str]
-    found_url: Optional[str]
+    posting_url: Optional[str]
     location: Optional[str]
     work_mode: Optional[WorkMode]
     salary_min: Optional[int]

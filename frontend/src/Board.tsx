@@ -296,9 +296,9 @@ function DetailDrawer({
           ) : (
             <p className="jd empty">No description saved</p>
           )}
-          {app.found_url && (
+          {app.posting_url && (
             <p style={{ marginTop: 8 }}>
-              <a href={app.found_url} target="_blank" rel="noreferrer"
+              <a href={app.posting_url} target="_blank" rel="noreferrer"
                  style={{ color: 'var(--accent)', fontSize: 13, textDecoration: 'none' }}>
                 Open posting ↗
               </a>
@@ -306,7 +306,7 @@ function DetailDrawer({
           )}
           {app.found_via && (
             <p style={{ marginTop: 4, fontSize: 12, color: 'var(--text-3)' }}>
-              Found via {app.found_via}
+              Via {app.found_via}
             </p>
           )}
         </div>
@@ -389,7 +389,7 @@ function DetailDrawer({
         >
           Delete
         </button>
-        {app.found_url && <button onClick={() => window.open(app.found_url!, '_blank')}>Open ↗</button>}
+        {app.posting_url && <button onClick={() => window.open(app.posting_url!, '_blank')}>Open ↗</button>}
       </div>
     </aside>
   )

@@ -365,7 +365,7 @@ def seed(session: Session, force: bool = False) -> int:
              work_mode="hybrid", applied_days=3,
              next_action="first follow-up", next_after=4, tags=["python", "grpc"]),
         dict(company="Wildberries", title="Python Developer",
-             found_via="hh.ru", found_url="https://hh.ru/vacancy/88451020",
+             found_via="hh.ru", posting_url="https://hh.ru/vacancy/88451020",
              applied_via="company site", applied_ref="https://career.wildberries.ru/vacancy/1042",
              status=Status.applied, salary_min=350000, salary_max=480000, currency="RUB",
              location="Moscow", work_mode="onsite", applied_days=9,
@@ -388,7 +388,7 @@ def seed(session: Session, force: bool = False) -> int:
                          "Stack: Python, Go, PostgreSQL, ClickHouse, Kubernetes. You'll design "
                          "distributed event-processing services handling up to 1M RPS, cut pipeline "
                          "latency, and mentor. 5+ years of experience required.",
-             found_via="referral", found_url="https://yandex.ru/jobs/vacancies/12345",
+             found_via="referral", posting_url="https://yandex.ru/jobs/vacancies/12345",
              tags=["python", "go", "clickhouse"]),
         dict(company="Toloka", title="ML Platform Engineer", applied_via="linkedin",
              status=Status.interview, salary_min=70000, salary_max=90000, currency="EUR",
@@ -399,7 +399,7 @@ def seed(session: Session, force: bool = False) -> int:
              location="Paris", work_mode="hybrid", applied_days=21,
              next_action="reply to the offer", next_after=5, tags=["go", "python"]),
         dict(company="Ozon", title="Backend Engineer", company_url="https://job.ozon.ru",
-             found_via="aggregator", found_url="https://gorod.work/vacancy/ozon-backend-2291",
+             found_via="aggregator", posting_url="https://gorod.work/vacancy/ozon-backend-2291",
              applied_via="email", applied_ref="jobs@ozon.ru", status=Status.rejected,
              salary_min=300000, salary_max=420000, currency="RUB", location="Moscow",
              work_mode="hybrid", applied_days=18, reached=Status.in_contact,
