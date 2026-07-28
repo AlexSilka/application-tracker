@@ -20,6 +20,7 @@ from tracker.models import (
     ApplicationUpdate,
     Direction,
     EventKind,
+    Priority,
     Status,
     WorkMode,
 )
@@ -46,6 +47,14 @@ def _parse_direction(value: str) -> Direction:
     except ValueError:
         valid = ", ".join(d.value for d in Direction)
         raise typer.BadParameter(f"unknown direction '{value}'. Allowed: {valid}")
+
+
+def _parse_priority(value: str) -> Priority:
+    try:
+        return Priority(value)
+    except ValueError:
+        valid = ", ".join(p.value for p in Priority)
+        raise typer.BadParameter(f"unknown priority '{value}'. Allowed: {valid}")
 
 
 def _fmt_salary(a) -> str:
@@ -96,6 +105,7 @@ def add(
     applied_ref: Optional[str] = typer.Option(None, "--applied-ref", help="exact apply target — a URL or an email"),
     direction: str = typer.Option("outbound", "--direction", help="outbound (I applied) | inbound (they reached out)"),
     status: str = typer.Option("saved", "--status"),
+    priority: Optional[str] = typer.Option(None, "--priority", "-p", help="high | medium | low"),
     salary_min: Optional[int] = typer.Option(None, "--salary-min"),
     salary_max: Optional[int] = typer.Option(None, "--salary-max"),
     currency: Optional[str] = typer.Option(None, "--currency"),
@@ -129,6 +139,7 @@ def add(
         applied_ref=applied_ref,
         direction=_parse_direction(direction),
         status=_parse_status(status),
+        priority=_parse_priority(priority) if priority else None,
         salary_min=salary_min,
         salary_max=salary_max,
         currency=currency,
@@ -178,6 +189,8 @@ def show(app_id: int = typer.Argument(..., metavar="ID")) -> None:
         typer.secho(f"#{a.id}  {a.company} — {a.title}", bold=True)
         typer.echo(f"  status:    {STATUS_LABEL.get(a.status, a.status.value)}")
         typer.echo(f"  direction: {a.direction.value}")
+        if a.priority:
+            typer.echo(f"  priority:  {a.priority.value}")
         if a.company_url:
             typer.echo(f"  site:      {a.company_url}")
         typer.echo(f"  applied:   {a.applied_via}" + (f" → {a.applied_ref}" if a.applied_ref else ""))
@@ -279,6 +292,7 @@ def set_fields(
     next_action_date: Optional[str] = typer.Option(None, "--next-action-date", help="YYYY-MM-DD"),
     clear_next_action: bool = typer.Option(False, "--clear-next-action", help="remove the next action and its date"),
     direction: Optional[str] = typer.Option(None, "--direction", help="outbound | inbound"),
+    priority: Optional[str] = typer.Option(None, "--priority", "-p", help="high | medium | low"),
     contact_name: Optional[str] = typer.Option(None, "--contact-name"),
     contact_email: Optional[str] = typer.Option(None, "--contact-email"),
     contact_url: Optional[str] = typer.Option(None, "--contact-url", help="recruiter / contact profile link, e.g. LinkedIn"),
@@ -302,6 +316,8 @@ def set_fields(
         updates["contact_url"] = contact_url
     if direction is not None:
         updates["direction"] = _parse_direction(direction)
+    if priority is not None:
+        updates["priority"] = _parse_priority(priority)
     patch = ApplicationUpdate(**updates)
     with open_session() as s:
         try:

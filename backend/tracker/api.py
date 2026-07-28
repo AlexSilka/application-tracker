@@ -24,6 +24,7 @@ from tracker.models import (
     EventRead,
     Status,
     StatusChange,
+    Priority,
     WorkMode,
 )
 
@@ -74,6 +75,7 @@ def meta() -> dict:
         "applied_via": APPLIED_VIA,
         "work_modes": [w.value for w in WorkMode],
         "directions": [d.value for d in Direction],
+        "priorities": [p.value for p in Priority],
     }
 
 

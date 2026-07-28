@@ -262,6 +262,7 @@ function DetailDrawer({
         </span>
         <div className="drawer-facts">
           {salary && <span className="chip salary">{salary}</span>}
+          {app.priority && <span className={`chip prio-${app.priority}`}>⚑ {app.priority}</span>}
           <span className={app.direction === 'inbound' ? 'chip inbound' : 'chip'}>{app.direction}</span>
           {app.found_via && (
             <span className="chip">

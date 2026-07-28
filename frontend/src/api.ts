@@ -31,6 +31,7 @@ export interface Application {
   applied_ref?: string | null
   direction: 'inbound' | 'outbound'
   status: Status
+  priority?: 'high' | 'medium' | 'low' | null
   cover_letter?: string | null
   contact_name?: string | null
   contact_email?: string | null
@@ -66,6 +67,7 @@ export interface JobInput {
   applied_ref?: string | null
   direction?: 'inbound' | 'outbound'
   status?: Status
+  priority?: string | null
   cover_letter?: string | null
   contact_name?: string | null
   contact_email?: string | null
@@ -90,6 +92,7 @@ export interface Meta {
   applied_via: string[]
   work_modes: string[]
   directions: string[]
+  priorities: string[]
 }
 
 export interface Metrics {

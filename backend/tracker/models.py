@@ -40,6 +40,12 @@ class Direction(str, Enum):
     inbound = "inbound"  # a recruiter / employer reached out to me
 
 
+class Priority(str, Enum):
+    high = "high"
+    medium = "medium"
+    low = "low"
+
+
 class EventKind(str, Enum):
     created = "created"
     status_change = "status_change"
@@ -139,6 +145,7 @@ class Application(SQLModel, table=True):
     direction: Direction = Field(default=Direction.outbound)
 
     status: Status = Field(default=Status.saved, index=True)
+    priority: Optional[Priority] = None  # high | medium | low — how much we want it
 
     cover_letter: Optional[str] = None  # WHAT we wrote — cover letter / message text
 
@@ -222,6 +229,7 @@ class ApplicationCreate(SQLModel):
     applied_ref: Optional[str] = None
     direction: Direction = Direction.outbound
     status: Status = Status.saved
+    priority: Optional[Priority] = None
     cover_letter: Optional[str] = None
     contact_name: Optional[str] = None
     contact_email: Optional[str] = None
@@ -246,6 +254,7 @@ class ApplicationUpdate(SQLModel):
     applied_via: Optional[str] = None
     applied_ref: Optional[str] = None
     direction: Optional[Direction] = None
+    priority: Optional[Priority] = None
     cover_letter: Optional[str] = None
     contact_name: Optional[str] = None
     contact_email: Optional[str] = None
@@ -292,6 +301,7 @@ class ApplicationRead(SQLModel):
     applied_ref: Optional[str]
     direction: Direction
     status: Status
+    priority: Optional[Priority]
     cover_letter: Optional[str]
     contact_name: Optional[str]
     contact_email: Optional[str]

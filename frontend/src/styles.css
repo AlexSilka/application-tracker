@@ -149,6 +149,9 @@ a { color: inherit; }
 .chip .cdot { width: 6px; height: 6px; border-radius: 50%; }
 .chip.salary { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .chip.inbound { color: var(--accent); background: var(--accent-weak); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+.chip.prio-high { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 35%, transparent); }
+.chip.prio-medium { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
+.chip.prio-low { color: var(--text-3); }
 .card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--border); }
 .age { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
 .next { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; background: var(--accent-weak); color: var(--accent); }

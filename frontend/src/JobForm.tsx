@@ -28,6 +28,7 @@ function initial(state: FormState): JobInput {
       applied_ref: a.applied_ref ?? '',
       direction: a.direction ?? 'outbound',
       status: a.status,
+      priority: a.priority ?? '',
       cover_letter: a.cover_letter ?? '',
       contact_name: a.contact_name ?? '',
       contact_email: a.contact_email ?? '',
@@ -53,6 +54,7 @@ function initial(state: FormState): JobInput {
     applied_ref: '',
     direction: 'outbound',
     status: state.status ?? 'saved',
+    priority: '',
     cover_letter: '',
     contact_name: '',
     contact_email: '',
@@ -105,6 +107,7 @@ export function JobForm({ state, onClose }: { state: FormState; onClose: () => v
         contact_name: f.contact_name || null,
         contact_email: f.contact_email || null,
         contact_url: f.contact_url || null,
+        priority: f.priority || null,
         next_action: f.next_action || null,
         next_action_date: f.next_action_date || null,
       }
@@ -190,6 +193,15 @@ export function JobForm({ state, onClose }: { state: FormState; onClose: () => v
               >
                 {(meta?.directions ?? ['outbound', 'inbound']).map((d) => (
                   <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              <span>Priority</span>
+              <select value={f.priority ?? ''} onChange={(e) => set('priority', e.target.value)}>
+                <option value="">—</option>
+                {(meta?.priorities ?? ['high', 'medium', 'low']).map((p) => (
+                  <option key={p} value={p}>{p}</option>
                 ))}
               </select>
             </label>
