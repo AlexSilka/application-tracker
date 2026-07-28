@@ -265,14 +265,18 @@ def set_fields(
     app_id: int = typer.Argument(..., metavar="ID"),
     next_action: Optional[str] = typer.Option(None, "--next-action"),
     next_action_date: Optional[str] = typer.Option(None, "--next-action-date", help="YYYY-MM-DD"),
+    clear_next_action: bool = typer.Option(False, "--clear-next-action", help="remove the next action and its date"),
     contact_name: Optional[str] = typer.Option(None, "--contact-name"),
     contact_email: Optional[str] = typer.Option(None, "--contact-email"),
     contact_url: Optional[str] = typer.Option(None, "--contact-url", help="recruiter / contact profile link, e.g. LinkedIn"),
 ) -> None:
     """Update individual job fields."""
-    # Only patch fields the user actually passed — building the update with explicit
-    # Nones would clear whatever the record already holds (next_action, contacts, …).
+    # Only patch fields the user actually passed — a plain set of one field must not
+    # wipe the others. Clearing is therefore explicit, via --clear-next-action.
     updates: dict = {}
+    if clear_next_action:
+        updates["next_action"] = None
+        updates["next_action_date"] = None
     if next_action is not None:
         updates["next_action"] = next_action
     if next_action_date is not None:
