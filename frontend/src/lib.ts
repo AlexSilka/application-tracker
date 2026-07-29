@@ -42,10 +42,10 @@ export function daysUntil(iso: string): number {
   return Math.round((target.getTime() - today.getTime()) / 86_400_000)
 }
 
-export function stageAge(iso: string): string {
+/** Compact age for the card's status badge next to the priority dot: 'today' | '6d'. */
+export function ageBadge(iso: string): string {
   const d = daysSince(iso)
-  if (d === 0) return 'today'
-  return `${d}d in stage`
+  return d === 0 ? 'today' : `${d}d`
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']

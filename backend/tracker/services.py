@@ -85,6 +85,7 @@ def create_application(session: Session, data: ApplicationCreate) -> Application
     now = utcnow()
     app.created_at = now
     app.updated_at = now
+    app.status_changed_at = now
     if app.status == Status.applied and app.applied_at is None:
         app.applied_at = now
     session.add(app)
@@ -142,6 +143,7 @@ def set_status(
         app.applied_at = now
 
     if old != new_status:
+        app.status_changed_at = now
         session.add(
             Event(
                 application_id=app_id,
@@ -426,6 +428,7 @@ def seed(session: Session, force: bool = False) -> int:
         if next_after is not None:
             app.next_action_date = (now + timedelta(days=next_after)).date()
         app.updated_at = now
+        app.status_changed_at = app.created_at  # entered its status when created; refined below if it moved
         session.add(app)
         session.commit()
         session.refresh(app)
@@ -437,6 +440,15 @@ def seed(session: Session, force: bool = False) -> int:
             session.add(Event(application_id=app.id, kind=EventKind.created,
                               body="Saved to wishlist", occurred_at=app.created_at))
         session.commit()
+
+        # The card entered its current status at its latest status-change (or at
+        # creation, for cards that never moved) — same rule the badge reads.
+        session.refresh(app)
+        changes = [e.occurred_at for e in app.events if e.kind == EventKind.status_change]
+        if changes:
+            app.status_changed_at = max(changes)
+            session.add(app)
+            session.commit()
         count += 1
 
     return count

@@ -43,6 +43,7 @@ export interface Application {
   applied_at?: string | null
   created_at: string
   updated_at: string
+  status_changed_at: string
 }
 
 export interface ApplicationDetail extends Application {

@@ -167,6 +167,10 @@ class Application(SQLModel, table=True):
     applied_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=utcnow)
     updated_at: datetime = Field(default_factory=utcnow)
+    # When the card entered its *current* status — bumped only on an actual status
+    # change, so it measures how long it has sat in this column (the days-in-stage
+    # badge). Distinct from updated_at, which any edit/note/upload touches.
+    status_changed_at: datetime = Field(default_factory=utcnow)
 
     events: list["Event"] = Relationship(
         back_populates="application",
@@ -321,6 +325,7 @@ class ApplicationRead(SQLModel):
     applied_at: Optional[datetime]
     created_at: datetime
     updated_at: datetime
+    status_changed_at: datetime
 
 
 class ApplicationDetail(ApplicationRead):

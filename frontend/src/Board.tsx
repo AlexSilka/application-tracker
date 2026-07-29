@@ -11,7 +11,7 @@ import {
 } from '@dnd-kit/core'
 import { api, type Application, type ApplicationDetail, type Status } from './api'
 import { KIND_LABEL, SRC_COLOR, STATUS_LABEL, WORK_MODE_LABEL } from './constants'
-import { daysUntil, fmtDate, fmtDateTime, formatSalary, stageAge } from './lib'
+import { ageBadge, daysSince, daysUntil, fmtDate, fmtDateTime, formatSalary } from './lib'
 import { IconCheck, IconClock, IconClose, IconDoc, IconLines } from './icons'
 
 function NextPill({ app }: { app: Application }) {
@@ -60,7 +60,12 @@ function Card({
     >
       <div className="card-top">
         <div className="card-co">{app.company}</div>
-        {app.priority && <span className={`prio-dot prio-${app.priority}`} title={`priority: ${app.priority}`} />}
+        <div className="card-top-right">
+          <span className="stage-days" title={`${daysSince(app.status_changed_at)} days in ${STATUS_LABEL[app.status]}`}>
+            {ageBadge(app.status_changed_at)}
+          </span>
+          {app.priority && <span className={`prio-dot prio-${app.priority}`} title={`priority: ${app.priority}`} />}
+        </div>
       </div>
       <div className="card-title">{app.title}</div>
       <div className="card-meta">
@@ -75,7 +80,6 @@ function Card({
       </div>
       {(app.next_action || app.next_action_date) && (
         <div className="card-foot">
-          <span className="age">{app.applied_at || app.direction === 'inbound' ? stageAge(app.updated_at) : 'not applied'}</span>
           <NextPill app={app} />
         </div>
       )}
